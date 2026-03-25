@@ -1,3 +1,5 @@
 *.wasm
 *.tgz
 *.zip
+
+*/node-modules/*
