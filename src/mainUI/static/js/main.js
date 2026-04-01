@@ -103,6 +103,8 @@ function syncFilesToTypst() {
         }
     }
 }
+
+export let firstRendered = false;
 export const previewSvg = (mainContent) => {
     if (mainContent === lastContent) return;
     if (!mainContent || !mainContent.trim()) {
@@ -118,6 +120,7 @@ export const previewSvg = (mainContent) => {
     $typst
         .svg({ mainContent })
         .then((svg) => {
+            hideLoadingScreen();
             console.timeEnd("Typst Render");
             console.log(`Rendered svgelement { len: ${svg.length} }`);
             contentDiv.innerHTML = svg;

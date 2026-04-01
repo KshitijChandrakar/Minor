@@ -12,3 +12,7 @@ def main1(request):
 
 def sidebar(request):
     return render(request, "mainUI/sidebar.html")
+
+
+def testing(request):
+    return render(request, "mainUI/testing.html")

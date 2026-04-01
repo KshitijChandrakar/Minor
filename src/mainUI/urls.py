@@ -6,5 +6,5 @@ import mainUI.views as views
 urlpatterns = [
     path("", views.main),
     path("index", views.main1),
-    path("sidebar", views.sidebar),
+    path("testing", views.testing),
 ]

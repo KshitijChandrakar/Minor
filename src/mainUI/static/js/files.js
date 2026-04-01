@@ -45,12 +45,114 @@ export function deleteFile(name) {
     renderSidebar();
 }
 
+// ─── Files Context Bar ───────────────────────────────────────────────────────────
+function showContextMenu(e, name) {
+    e.preventDefault();
+
+    // Remove existing context menu if any
+    const existingMenu = document.querySelector(".custom-context-menu");
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+
+    // Create context menu
+    const menu = document.createElement("div");
+    menu.className = "custom-context-menu";
+    menu.style.position = "fixed";
+    menu.style.left = `${e.clientX}px`;
+    menu.style.top = `${e.clientY}px`;
+    menu.style.backgroundColor = "white";
+    menu.style.border = "1px solid #ddd";
+    menu.style.borderRadius = "4px";
+    menu.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)";
+    menu.style.zIndex = "1000";
+    menu.style.minWidth = "150px";
+
+    // Menu options
+    const options = [
+        {
+            label: "Rename",
+            action: () => {
+                const newname = prompt("rename to:", name);
+                if (!newname) return;
+                const safename = newname.includes(".")
+                    ? newname
+                    : newname + ".typ";
+                renameFile(name, safename);
+                if (window.onActiveFileChange)
+                    window.onActiveFileChange(activeFile);
+            },
+        },
+        {
+            label: "Delete",
+            action: () => {
+                if (!confirm(`delete "${name}"?`)) return;
+                deleteFile(name);
+                if (window.onActiveFileChange)
+                    window.onActiveFileChange(activeFile);
+            },
+        },
+        {
+            label: "Mark as Main",
+            action: () => {
+                if (name !== mainFile) {
+                    setMainFile(name);
+                    if (window.onMainFileChange) window.onMainFileChange(name);
+                }
+            },
+        },
+    ];
+
+    options.forEach((option) => {
+        const menuItem = document.createElement("div");
+        menuItem.textContent = option.label;
+        menuItem.style.padding = "8px 12px";
+        menuItem.style.cursor = "pointer";
+        menuItem.style.fontSize = "14px";
+
+        menuItem.addEventListener("mouseenter", () => {
+            menuItem.style.backgroundColor = "#f5f5f5";
+        });
+
+        menuItem.addEventListener("mouseleave", () => {
+            menuItem.style.backgroundColor = "white";
+        });
+
+        menuItem.addEventListener("click", () => {
+            option.action();
+            menu.remove();
+        });
+
+        menu.appendChild(menuItem);
+    });
+
+    document.body.appendChild(menu);
+
+    // Close menu when clicking elsewhere
+    const closeMenu = (e) => {
+        if (!menu.contains(e.target)) {
+            menu.remove();
+            document.removeEventListener("click", closeMenu);
+            document.removeEventListener("contextmenu", closeMenu);
+        }
+    };
+
+    setTimeout(() => {
+        document.addEventListener("click", closeMenu);
+        document.addEventListener("contextmenu", closeMenu);
+    }, 0);
+}
+
 // ─── File Info Bar ───────────────────────────────────────────────────────────
 // Updates #file-info with the current editing / main file context.
 
 export function renderFileInfo() {
     const bar = document.getElementById("file-info");
-    if (!bar) return;
+    if (!bar) {
+        console.log("the Bar is in Hell");
+        return;
+    }
+    console.log("Active File is ", activeFile);
 
     // Show only the current file being edited
     bar.innerHTML = `<strong>${activeFile}</strong>`;
@@ -70,14 +172,13 @@ export function renderSidebar() {
     const newBtnClone = newBtn.cloneNode(true);
     newBtn.parentNode.replaceChild(newBtnClone, newBtn);
     newBtnClone.addEventListener("click", () => {
-        console.log("HI");
         const name = prompt("New file name:");
         if (!name) return;
+        console.log(`Pressed Button ${name}`);
         const safeName = name.includes(".") ? name : name + ".typ";
         putFile(safeName, "");
         switchToFile(safeName);
     });
-    newBtnClone.addEventListener("cone");
 
     // Clear and rebuild file list
     list.innerHTML = "";
@@ -95,55 +196,54 @@ export function renderSidebar() {
         nameSpan.textContent = name + (name === mainFile ? " ★" : "");
         nameSpan.title = "Click to open";
         nameSpan.addEventListener("click", () => switchToFile(name));
+
+        nameSpan.addEventListener("contextmenu", (e) => {
+            console.log("context menu");
+            showContextMenu(e, name);
+        });
         li.appendChild(nameSpan);
 
-        // Action buttons
-        const actions = document.createElement("span");
-        actions.className = "sidebar-item-actions";
-
-        // Set as main
-        if (name !== mainFile) {
-            const starBtn = document.createElement("button");
-            starBtn.textContent = "★";
-            starBtn.title = "Set as open file";
-            starBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                setMainFile(name);
-                if (window.onMainFileChange) window.onMainFileChange(name);
-            });
-            actions.appendChild(starBtn);
-        }
-
-        // Rename
-        const renameBtn = document.createElement("button");
-        renameBtn.textContent = "✎";
-        renameBtn.title = "Rename";
-        renameBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const newName = prompt("Rename to:", name);
-            if (!newName) return;
-            const safeName = newName.includes(".") ? newName : newName + ".typ";
-            renameFile(name, safeName);
-            if (window.onActiveFileChange)
-                window.onActiveFileChange(activeFile);
-        });
-        actions.appendChild(renameBtn);
-
-        // Delete
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "✕";
-        delBtn.title = "Delete";
-        delBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (!confirm(`Delete "${name}"?`)) return;
-            deleteFile(name);
-            if (window.onActiveFileChange)
-                window.onActiveFileChange(activeFile);
-        });
-        actions.appendChild(delBtn);
-
-        li.appendChild(actions);
-        list.appendChild(li);
+        // action buttons
+        // const actions = document.createElement("span");
+        // actions.className = "sidebar-item-actions";
+        //
+        // // set as main
+        // if (name !== mainFile) {
+        //     const starBtn = document.createElement("button");
+        //     starBtn.textContent = "★";
+        //     starBtn.title = "set as open file";
+        //     starBtn.addEventListener("click", (e) => {
+        //         e.stopPropagation();
+        //         setMainFile(name);
+        //         if (window.onMainFileChange) window.onMainFileChange(name);
+        //     });
+        //     actions.appendChild(starBtn);
+        // }
+        //
+        // // rename
+        // const renameBtn = document.createElement("button");
+        // renameBtn.textContent = "✎";
+        // renameBtn.title = "rename";
+        // renameBtn.addEventListener("click", (e) => {
+        //     e.stopPropagation();
+        // });
+        // actions.appendChild(renameBtn);
+        //
+        // // delete
+        // const delBtn = document.createElement("button");
+        // delBtn.textContent = "✕";
+        // delBtn.title = "delete";
+        // delBtn.addEventListener("click", (e) => {
+        //     e.stopPropagation();
+        //     if (!confirm(`delete "${name}"?`)) return;
+        //     deleteFile(name);
+        //     if (window.onActiveFileChange)
+        //         window.onActiveFileChange(activeFile);
+        // });
+        // actions.appendChild(delBtn);
+        //
+        // li.appendChild(actions);
+        // list.appendChild(li);
     });
 
     renderFileInfo();
