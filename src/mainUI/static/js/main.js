@@ -1,4 +1,4 @@
-import {
+i import {
     fileStore,
     activeFile,
     mainFile,
@@ -6,39 +6,14 @@ import {
     renderSidebar,
     switchToFile,
 } from "./files.js";
-import { currentState } from "./buttons.js";
+// import { currentState } from "./buttons.js";
 import { RenderError } from "./errors.js";
+
+// import { RenderEditor } from "./editor.js";
 // ─── DOM refs ────────────────────────────────────────────────────────────────
 // const stateDisplay = document.getElementById("state-display");
-const input = document.getElementById("text-input");
+// const input = document.getElementById("text-input");
 const contentDiv = document.getElementById("content");
-
-// ─── Pandoc loading ──────────────────────────────────────────────────────────
-let pandocReadyPromise = null;
-export let onFormatsLoaded = null;
-
-function loadPandoc() {
-    if (pandocReadyPromise) return pandocReadyPromise;
-
-    pandocReadyPromise = (async () => {
-        const { createPandocInstance } = await import("./core.js");
-        const response = await fetch("./static/js/pandoc.wasm");
-        const wasmBinary = await response.arrayBuffer();
-        const { convert, query } = await createPandocInstance(wasmBinary);
-        window.pandocModule = { convert, query };
-
-        const pandocVersion = await query({ query: "version" });
-        const inputFormats = await query({ query: "input-formats" });
-        const outputFormats = await query({ query: "output-formats" });
-
-        if (onFormatsLoaded) onFormatsLoaded(inputFormats, outputFormats);
-    })();
-
-    console.log("loaded Pandoc");
-    return pandocReadyPromise;
-}
-
-loadPandoc().catch((err) => console.error("Failed to load pandoc:", err));
 
 // ─── Typst loading ───────────────────────────────────────────────────────────
 let typstLoaded = false;
@@ -84,11 +59,6 @@ loadTypst()
 
 // ─── Preview ─────────────────────────────────────────────────────────────────
 let lastContent = null;
-
-// Sync every file in fileStore into Typst's virtual filesystem so that
-// #import "other.typ" works without hitting the sandbox access-denied error.
-// Files are mounted at /playground/<filename> and the main file is passed
-// as mainContent using the same path so imports resolve correctly.
 function syncFilesToTypst() {
     for (const [name, content] of Object.entries(fileStore)) {
         // mapShadow overlays a file into Typst's in-memory FS at the given path.
@@ -133,7 +103,7 @@ export const previewSvg = (mainContent) => {
 };
 let createPdfButton = document.getElementById("Download");
 createPdfButton.addEventListener("click", function () {
-    createPdf(input.value);
+    createPdf(fileStore[mainFile]);
 });
 
 export function createPdf(mainContent) {
@@ -203,7 +173,7 @@ function buildFilesPayload(entryName) {
 const debouncedHandler = debounce(async (value) => {
     fileStore[activeFile] = value;
 
-    const currentFormat = currentState;
+    const currentFormat = window.currentState || "Typst";
 
     if (currentFormat === "Typst") {
         // Always preview the main file; if the user is editing a non-main file
@@ -240,33 +210,49 @@ const debouncedHandler = debounce(async (value) => {
         console.error("Conversion failed:", error);
     }
 }, 1000);
+
+window.debouncedHandler = debouncedHandler;
 let LivePreview = document.getElementById("checkboxLivePreview");
 let compileButton = document.getElementById("compile");
-input.addEventListener("input", (e) => {
-    if (LivePreview.checked) debouncedHandler(e.target.value);
-});
+
 LivePreview.addEventListener("change", (e) => {
     compileButton.classList.toggle("dn", e.target.checked);
     compileButton.classList.toggle("hidden", e.target.checked);
 });
 
 compileButton.addEventListener("click", () => {
-    debouncedHandler(input.value);
+    debouncedHandler(window.editorAPI.getValue());
 });
 
 // ─── File switching wiring ────────────────────────────────────────────────────
 // files.js calls these when the active or main file changes.
 
 window.onActiveFileChange = (name) => {
-    input.value = fileStore[name] ?? "";
-    debouncedHandler(input.value);
+    window.editorAPI.loadValue(fileStore[name] ?? "");
+    debouncedHandler(window.editorAPI.getValue());
 };
 
 window.onMainFileChange = () => {
     // Re-render using the newly designated main file
-    debouncedHandler(input.value);
+    debouncedHandler(window.editorAPI.getValue());
 };
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-input.value = fileStore[activeFile] ?? "";
+function waitForEditorAPI() {
+    return new Promise((resolve) => {
+        const check = setInterval(() => {
+            if (
+                window.editorAPI &&
+                typeof window.editorAPI.loadValue === "function"
+            ) {
+                clearInterval(check);
+                resolve();
+            }
+        }, 50);
+    });
+}
+
+// RenderEditor();
+await waitForEditorAPI();
+window.editorAPI.loadValue(fileStore[mainFile] ?? "");
 renderSidebar();

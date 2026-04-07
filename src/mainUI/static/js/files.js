@@ -161,7 +161,7 @@ export function renderFileInfo() {
 //───────────────────────────────────────────────────────────
 
 // ─── Sidebar UI ──────────────────────────────────────────────────────────────
-// Expects a <div id="sidebar"> and a <textarea id="text-input"> in the DOM.
+// Expects a <div id="sidebar">
 // Calls window.onActiveFileChange(name) whenever the editor should switch files.
 export function renderSidebar() {
     const sidebar = document.getElementById("files-sidebar");
@@ -213,8 +213,8 @@ export function renderSidebar() {
 }
 export function switchToFile(name) {
     // Save current textarea → fileStore before switching
-    const textarea = document.getElementById("text-input");
-    if (textarea) fileStore[activeFile] = textarea.value;
+    if (window.editorAPI.getValue)
+        fileStore[activeFile] = window.editorAPI.getValue();
 
     const list = sidebar.querySelector(".sidebar-list");
     list.querySelectorAll(".active-file").forEach((element) => {

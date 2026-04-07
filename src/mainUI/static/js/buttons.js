@@ -11,14 +11,14 @@ window.formatMap = {
     HTML: "html",
 };
 
-export let currentState = "Typst";
+window.currentState = "Typst";
 
 function updateButtonStyles() {
     document.querySelectorAll(".state-btn").forEach((button) => {
-        if (button.textContent === currentState) {
+        if (button.textContent === window.currentState) {
             button.classList.add("selected_button");
             const buttonGroup = document.getElementById("button-container");
-            const selectedIndex = buttonOptions.indexOf(currentState);
+            const selectedIndex = buttonOptions.indexOf(window.currentState);
             const buttons = document.querySelectorAll(".regular_button");
             if (buttonGroup && buttonOptions.length > 0) {
                 const slider = buttonGroup.querySelector(".button-selection");
@@ -48,20 +48,18 @@ buttonOptions.forEach((option) => {
 updateButtonStyles();
 
 async function setState(newState) {
-    const textarea = document.getElementById("text-input");
-    const oldState = currentState;
-    currentState = newState;
-
+    const oldState = window.currentState;
+    window.currentState = newState;
+    window.editorAPI.setMode(newState);
     // Update the state indicator read by main.js / buttons.js
-    // document.getElementById("state-display").textContent = currentState;
+    // document.getElementById("state-display").textContent = window.currentState;
 
     const fromFormat = window.formatMap[oldState];
     const toFormat = window.formatMap[newState];
 
     updateButtonStyles();
 
-    // Save current textarea into fileStore before converting
-    fileStore[activeFile] = textarea.value;
+    fileStore[activeFile] = window.editorAPI.getValue();
 
     // Convert every file individually from old format → new format.
     // We also keep a typst-converted copy of the main file for the preview.
@@ -98,8 +96,7 @@ async function setState(newState) {
         fileStore[name] = content;
     }
 
-    // Update the visible textarea to show the active file's converted content
-    textarea.value = fileStore[activeFile] ?? "";
+    window.editorAPI.loadValue(fileStore[activeFile] ?? "");
 
     // Update the preview using the main file.
     // If the new format is Typst, preview directly.

@@ -1,9 +1,18 @@
-import { currentState } from "./buttons.js";
-import React, { useState, useRef, useEffect } from "react";
-import { createRoot } from "react-dom/client";
-import { createEditor, Transforms, Editor, Range } from "slate";
-import { Slate, Editable, withReact } from "slate-react";
+import React, {
+    useState,
+    useRef,
+    useEffect,
+} from "https://esm.sh/react@19.0.0";
+import { createRoot } from "https://esm.sh/react-dom@19.0.0/client";
+import { createEditor, Transforms, Editor, Range } from "https://esm.sh/slate";
+import {
+    Slate,
+    Editable,
+    withReact,
+} from "https://esm.sh/slate-react?deps=react@19.0.0,react-dom@19.0.0";
 
+window.editorAPI = {};
+// import { currentState } from "./buttons.js";
 // ── Syntax table ──────────────────────────────────────────────────────────────
 
 const SYNTAX = {
@@ -141,9 +150,11 @@ const initialValue = [
     },
 ];
 
-const App = () => {
+export const App = () => {
     const [editor] = useState(() => withReact(createEditor()));
-    const [mode, setMode] = useState("Markdown");
+    const [mode, setMode] = useState("Typst");
+    window.editorAPI["setMode"] = setMode;
+
     const [, tick] = useState(0);
     const bump = () => tick((n) => n + 1);
 
@@ -153,10 +164,8 @@ const App = () => {
 
     // Expose API on window
     useEffect(() => {
-        window.editorAPI = {
-            getValue: () => getValue(editor),
-            loadValue: (text) => loadValue(editor, text),
-        };
+        window.editorAPI["getValue"] = () => getValue(editor);
+        window.editorAPI["loadValue"] = (text) => loadValue(editor, text);
     }, [editor]);
 
     function doFormat(key) {
@@ -233,11 +242,62 @@ const App = () => {
             React.createElement(Editable, {
                 id: "slate-area",
                 renderLeaf: (props) => React.createElement(Leaf, props),
+                // DOM event listeners
+                onKeyDown: (event) => {
+                    console.log("Key pressed:", event.key);
+                    if (window.debouncedHandler)
+                        window.debouncedHandler(window.editorAPI.getValue());
+                },
+
+                onCopy: (event) => {
+                    console.log("Content copied");
+                    // Access clipboard data if needed
+                    const selection = window.getSelection();
+                    console.log("Selected text:", selection.toString());
+                },
+
+                onPaste: (event) => {
+                    console.log("Content pasted");
+                    // Prevent default paste behavior if needed
+                    // event.preventDefault();
+                },
+
+                onCut: (event) => {
+                    console.log("Content cut");
+                },
+
+                onFocus: (event) => {
+                    console.log("Editor focused");
+                },
+
+                onBlur: (event) => {
+                    console.log("Editor blurred");
+                },
+
+                onDragStart: (event) => {
+                    console.log("Drag started");
+                },
+
+                onDrop: (event) => {
+                    console.log("Content dropped");
+                },
             }),
         ),
     );
 };
 
-createRoot(document.getElementById("editor-root")).render(
-    React.createElement(App),
-);
+const EditorDiv = document.getElementById("editor-root");
+if (!EditorDiv) {
+    console.log("UGGGhh No editor div?");
+}
+createRoot(EditorDiv).render(React.createElement(App));
+
+export function RenderEditor() {
+    const EditorDiv = document.getElementById("editor-root");
+    if (!EditorDiv) {
+        console.log("UGGGhh No editor div?");
+    }
+    createRoot(EditorDiv).render(React.createElement(App));
+}
+
+window.editorAPI.RenderEditor = RenderEditor;

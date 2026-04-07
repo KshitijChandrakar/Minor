@@ -8,20 +8,20 @@
 const isNode =
     typeof process !== "undefined" &&
     process.versions != null &&
-    process.versions.node != null
+    process.versions.node != null;
 
 // Load the appropriate implementation based on environment
-let pandocModule
+let pandocModule;
 
 if (isNode) {
     // Node.js: Use the Node.js-specific entry point
-    pandocModule = await import("./index.node.js")
+    pandocModule = await import("./index.node.js");
 } else {
     // Browser: Use the browser-specific entry point
-    pandocModule = await import("./index.browser.js")
+    pandocModule = await import("./index.browser.js");
 }
 
 // Re-export the API
-export const convert = pandocModule.convert
-export const query = pandocModule.query
-export const pandoc = pandocModule.pandoc
+export const convert = pandocModule.convert;
+export const query = pandocModule.query;
+export const pandoc = pandocModule.pandoc;

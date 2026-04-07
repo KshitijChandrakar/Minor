@@ -1,20 +1,31 @@
 <div class="w-100">
-    <div id="editor-root"></div>
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@19.0.0",
+                "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+                "slate": "https://esm.sh/slate",
+                "slate-react": "https://esm.sh/slate-react?deps=react@19.0.0,react-dom@19.0.0"
+            }
+        }
+    </script>
+    <script type="module" src="./static/js/editor.js"></script>
     <div
         id="file-info"
         class="bg-selected"
         style="color: white; padding: 4px 8px; font-size: 14px; margin: 0"
     ></div>
-    <textarea
-        style="
-            margin: 0;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-top: none;
-        "
-        class="mw-100 w-100 h-100 mh-100"
-        rows="10"
-        placeholder="Enter your text here..."
-        id="text-input"
-    ></textarea>
+    <div id="editor-root"></div>
+    <!-- <textarea -->
+    <!--     style=" -->
+    <!--         margin: 0; -->
+    <!--         padding: 8px; -->
+    <!--         border: 1px solid #ccc; -->
+    <!--         border-top: none; -->
+    <!--     " -->
+    <!--     class="mw-100 w-100 h-100 mh-100" -->
+    <!--     rows="10" -->
+    <!--     placeholder="Enter your text here..." -->
+    <!--     id="text-input" -->
+    <!-- ></textarea> -->
 </div>
