@@ -1,145 +1,114 @@
 :root {
-    --button-group-border: rgba(53, 52, 52, 0.226);
-    --regular-button-text: #000000;
-    --regular-button-hover-bg: rgba(0, 0, 0, 0.05);
+
+    --button-group-border: rgba(53,52,52,0.25);
+
+    --regular-button-text: #000;
+
+    --regular-button-hover-bg: rgba(0,0,0,0.05);
+
     --selected-button-text: #fff;
+
     --selection-bg: rgb(11 117 223);
-    --text: #03100e;
-    --background: #f7fefd;
-    --primary: #2ad7c9;
-    --secondary: #c991ea;
-    --accent: #df53ca;
+
     --button-group-bg: #fff;
+
 }
 
-body {
-    background-color: var(--background);
-}
 
-.bg-selected {
-    background-color: var(--selection-bg);
-}
+/* container */
 
 .button-group {
-    --container_width: 300px;
+
     position: relative;
+
     display: inline-flex;
+
     align-items: center;
+
+    justify-content: space-between;
+
+    width: 320px;
+
+    height: 40px;
+
     border-radius: 9999px;
-    background-color: var(--button-group-bg);
-    color: var(--regular-button-text);
-    width: var(--container_width);
-    overflow: hidden;
+
     border: 1px solid var(--button-group-border);
+
+    background: var(--button-group-bg);
+
+    overflow: hidden;
+
 }
 
-.regular_button {
-    flex: 1;
-    padding: 10px;
-    cursor: pointer;
-    /* display: flex; */
-    justify-content: center;
-    align-items: center;
-    z-index: 1;
-    font-weight: 600;
-    letter-spacing: -1px;
-    font-size: 14px;
-    background: transparent;
-    border: none;
-    transition: color 0.15s ease;
-    font-family: inherit;
-}
 
-.regular_button:hover {
-    background-color: var(--regular-button-hover-bg);
-}
-
-.selected_button {
-    color: var(--selected-button-text);
-    background: transparent;
-    border: none;
-}
+/* sliding pill */
 
 .button-selection {
-    /* display: none;  needs to be none*/
+
     position: absolute;
-    height: 100%;
-    width: calc(var(--container_width) / 4);
-    z-index: 0;
-    left: 0;
+
     top: 0;
-    background-color: var(--selection-bg);
-    border-radius: 9999px;
-    transition: transform 0.2s ease;
-    pointer-events: none;
-}
 
-.button-group.has-selection .button-selection {
-    display: block;
-}
+    left: 0;
 
-.button-group[data-count="1"] .button-selection {
-    width: 100%;
-    transform: translateX(0%);
-}
-.button-group[data-count="2"] .button-selection {
-    width: 50%;
-}
-.button-group[data-count="3"] .button-selection {
-    width: calc(100% / 3);
-}
-.button-group[data-count="4"] .button-selection {
+    height: 100%;
+
     width: 25%;
+
+    background: var(--selection-bg);
+
+    border-radius: 9999px;
+
+    transition: transform 0.25s ease;
+
+    pointer-events: none;
+
+    z-index: 0;
+
 }
 
-/* Sidebar Styles */
-.sidebar {
-    display: none;
-}
 
-.sidebar.active {
-    display: flex;
-}
-.sidebar-toggle-btn {
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-    min-height: 50px;
-    max-width: 50px;
-    max-height: 50px;
-    font-size: 24px;
-    display: flex;
+/* buttons */
+
+.regularbutton {
+
+    flex: 1;
+
+    height: 100%;
+
     border: none;
-    align-items: center;
-    justify-content: center;
-}
-.sidebar-container {
-}
 
-.sidebar-header {
-}
-.sidebar-title {
-}
+    background: transparent;
 
-#checkboxLivePreview {
-    display: none;
-}
-.switchButton {
-    position: relative;
-    width: fit-content;
-    padding: 10px 20px;
-    background-color: rgb(46, 46, 46);
-    border-radius: 50px;
-    z-index: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.9em;
+    font-size: 14px;
+
     font-weight: 600;
-    transition: all 0.3s;
+
+    cursor: pointer;
+
+    color: var(--regular-button-text);
+
+    position: relative;
+
+    z-index: 1;
+
 }
-#checkboxLivePreview:checked + .switchButton {
-    background-color: var(--selection-bg);
+
+
+/* hover */
+
+.regularbutton:hover {
+
+    background: var(--regular-button-hover-bg);
+
+}
+
+
+/* selected text */
+
+.selectedbutton {
+
+    color: var(--selected-button-text);
+
 }
