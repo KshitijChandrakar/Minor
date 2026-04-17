@@ -92,7 +92,6 @@ function buildOutline(data) {
         parent.appendChild(details);
         stack.push({ level, parent: contentDiv });
     }
-
     return container;
 }
 
@@ -119,3 +118,5 @@ async function outliner() {
 }
 
 window.outliner = outliner;
+
+export { outliner };

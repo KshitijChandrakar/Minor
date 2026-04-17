@@ -5,20 +5,27 @@ from django.urls import include, path
 # urls.py
 from django.urls import path
 from . import views
+from . import api
+from . import authentication as auth
 
 # app_name = 'authentication'
 
 urlpatterns = [
-    # path('register/', views.register_view, name='register'),
-    # path('login/', views.login_view, name='login'),
-    # path('logout/', views.logout_view, name='logout'),
-    # path('dashboard/', views.dashboard_view, name='dashboard'),
-    # path('update-file-store/', views.update_file_store_view, name='update_file_store'),
-    # path('update-main-file/', views.update_main_file_view, name='update_main_file'),
-    # path('profile/', views.get_user_profile_view, name='profile'),
-    path("editor", views.editor),
+    path('register/', auth.register_view, name='register'),
+    path('login/', auth.login_view, name='login'),
+    path('logout/', auth.logout_view, name='logout'),
+    path('dashboard/', auth.dashboard_view, name='dashboard'),
+    path('profile/', auth.get_user_profile_view, name='profile'),
+
+    # Editor URLS
+    path("editor/<str:projectId>", views.editor),
     path("editor1", views.main),
     path("testing", views.testing),
+    
+
+    path("api/filesFetch/<str:projectID>", api.filesFetch),
+    path("api/filesChange", api.filesChange),
     path("",views.homepage),
+
 
 ]

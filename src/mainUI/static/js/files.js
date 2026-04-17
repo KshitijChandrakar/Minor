@@ -2,20 +2,25 @@
 // Central source of truth for all open files.
 // { filename: string → content: string }
 
-export const fileStore = {
+export let fileStore = {
     "main.typ": "Hello, Try typing in the textbox to the right to render.",
 };
-
 export let activeFile = "main.typ";
 export let mainFile = "main.typ";
 
+export let filesChanged = {
+    mainFile: true,
+};
 export function setActiveFile(name) {
+    filesChanged[name] = true;
     activeFile = name;
+    console.log("Changed Active File to", name);
 }
 
 export function setMainFile(name) {
     mainFile = name;
     renderSidebar();
+    console.log("Changed Main File to", name);
 }
 
 // Add or overwrite a file
@@ -152,7 +157,7 @@ export function renderFileInfo() {
         console.log("the Bar is in Hell");
         return;
     }
-    console.log("Active File is ", activeFile);
+    // console.log("Active File is ", activeFile);
 
     // Show only the current file being edited
     bar.innerHTML = `<strong>${activeFile}</strong>`;
@@ -238,43 +243,31 @@ export function switchToFile(name) {
 }
 
 // ─── Fetch initial files from server ────────────────────────
-function fetchInitialFiles() {
-    return fetch("/api/filesFetch/<projectID>")
+export function fetchInitialFiles() {
+    return fetch("/api/filesFetch/123")
         .then((response) => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
         })
         .then((data) => {
+            console.log("Successfully Fetched data", data);
             for (const key of Object.keys(fileStore)) {
                 delete fileStore[key];
             }
+            fileStore = data.files.files;
 
-            // Populate with fetched files
-            if (data.fileStore && typeof data.fileStore === "object") {
-                Object.assign(fileStore, data.fileStore);
-            }
+            mainFile = data.files.main_file;
 
-            // Update mainFile and activeFile
-            if (data.mainFile && fileStore[data.mainFile]) {
-                mainFile = data.mainFile;
-                activeFile = data.mainFile;
-            } else {
-                // Fallback to first available file
-                const firstFile = Object.keys(fileStore)[0];
-                if (firstFile) {
-                    mainFile = firstFile;
-                    activeFile = firstFile;
-                }
-            }
+            filesChanged[mainFile] = true;
 
             // Re-render UI
-            renderSidebar();
-            renderFileInfo();
+            // renderSidebar();
+            // renderFileInfo();
 
             // Notify other modules if callbacks exist
-            if (window.onActiveFileChange)
-                window.onActiveFileChange(activeFile);
-            if (window.onMainFileChange) window.onMainFileChange(mainFile);
+            // if (window.onActiveFileChange)
+            //     window.onActiveFileChange(activeFile);
+            // if (window.onMainFileChange) window.onMainFileChange(mainFile);
 
             // Return the updated fileStore and mainFile for chaining
             return { fileStore, mainFile };
@@ -286,15 +279,3 @@ function fetchInitialFiles() {
             throw error;
         });
 }
-
-// ─── Execute and load the editor content on success ────────────────────────
-fetchInitialFiles()
-    .then(() => {
-        // If Success: load the content of the main file into the editor
-        while (!window.editorAPI)
-            window.editorAPI.loadValue(fileStore[mainFile]);
-    })
-    .catch((error) => {
-        // Optional: handle the error (e.g., show a user notification)
-        console.warn("Initialisation failed, editor not loaded", error);
-    });

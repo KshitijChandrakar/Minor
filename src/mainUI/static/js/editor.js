@@ -10,6 +10,11 @@ import {
     Editable,
     withReact,
 } from "https://esm.sh/slate-react?deps=react@19.0.0,react-dom@19.0.0";
+import { outliner } from "./outline.js";
+
+import { debounce } from "./HelperFunctions.js";
+
+import { SaveToServer } from "./UploadSave.js";
 
 window.editorAPI = {};
 // import { currentState } from "./buttons.js";
@@ -243,44 +248,46 @@ export const App = () => {
                 id: "slate-area",
                 renderLeaf: (props) => React.createElement(Leaf, props),
                 // DOM event listeners
-                onKeyDown: (event) => {
-                    // console.log("Key pressed:", event.key);
+                onKeyUp: (event) => {
+                    console.log("Key pressed:", event.key);
                     if (window.debouncedHandler)
                         window.debouncedHandler(window.editorAPI.getValue());
-                    if (window.outliner) window.outliner();
+
+                    outliner();
+                    debounce(SaveToServer(window.editorAPI.getValue()), 5000);
                 },
 
                 onCopy: (event) => {
-                    console.log("Content copied");
+                    // console.log("Content copied");
                     // Access clipboard data if needed
-                    const selection = window.getSelection();
-                    console.log("Selected text:", selection.toString());
+                    // const selection = window.getSelection();
+                    // console.log("Selected text:", selection.toString());
                 },
 
                 onPaste: (event) => {
-                    console.log("Content pasted");
+                    // console.log("Content pasted");
                     // Prevent default paste behavior if needed
                     // event.preventDefault();
                 },
 
                 onCut: (event) => {
-                    console.log("Content cut");
+                    // console.log("Content cut");
                 },
 
                 onFocus: (event) => {
-                    console.log("Editor focused");
+                    // console.log("Editor focused");
                 },
 
                 onBlur: (event) => {
-                    console.log("Editor blurred");
+                    // console.log("Editor blurred");
                 },
 
                 onDragStart: (event) => {
-                    console.log("Drag started");
+                    // console.log("Drag started");
                 },
 
                 onDrop: (event) => {
-                    console.log("Content dropped");
+                    // console.log("Content dropped");
                 },
             }),
         ),
@@ -302,3 +309,17 @@ export function RenderEditor() {
 }
 
 window.editorAPI.RenderEditor = RenderEditor;
+
+export const waitForEditorAPI = new Promise((resolve) => {
+    if (window.editorAPI) {
+        resolve(window.editorAPI);
+        return;
+    }
+
+    const checkInterval = setInterval(() => {
+        if (window.editorAPI) {
+            clearInterval(checkInterval);
+            resolve(window.editorAPI);
+        }
+    }, 100); // Check every 100ms
+});

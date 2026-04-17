@@ -9,6 +9,8 @@ import {
 // import { currentState } from "./buttons.js";
 import { RenderError } from "./errors.js";
 
+import { debounce } from "./HelperFunctions.js";
+
 // import { RenderEditor } from "./editor.js";
 // ─── DOM refs ────────────────────────────────────────────────────────────────
 // const stateDisplay = document.getElementById("state-display");
@@ -151,13 +153,6 @@ export function createPdf(mainContent) {
         });
 }
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function debounce(func, delay) {
-    let timeoutId;
-    return function (...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, args), delay);
-    };
-}
 
 // All files except the entry point are passed as the `files` payload so pandoc
 // can resolve cross-file references (includes, imports, etc.)

@@ -5,25 +5,10 @@ Authentication System{% endblock %} {% block content %}
     <h2>User Dashboard</h2>
     <p><strong>Name:</strong> {{ user.name }}</p>
     <p><strong>Email:</strong> {{ user.email }}</p>
-    <p><strong>Main File:</strong> {{ user.main_file|default:"Not set" }}</p>
     <p><strong>Date Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
 </div>
 
-<div class="dashboard-card">
-    <h3>Update Main File</h3>
-    <form method="post" action="{% url 'update_main_file' %}">
-        {% csrf_token %}
-        <div class="form-group">
-            <input
-                type="text"
-                name="main_file"
-                value="{{ user.main_file|default:'' }}"
-                placeholder="Enter main file name"
-            />
-        </div>
-        <button type="submit">Update Main File</button>
-    </form>
-</div>
+<div class="dashboard-card"></div>
 
 <div class="dashboard-card">
     <h3>FileStore (JSON Object)</h3>

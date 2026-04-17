@@ -83,7 +83,7 @@ class SidebarManager {
 }
 
 // Initialize sidebar manager
-const sidebarManager = new SidebarManager();
-sidebarManager.toggleSidebar("files");
+// const sidebarManager = new SidebarManager();
+// sidebarManager.toggleSidebar("files");
 // Export for use in other modules
-// export { sidebarManager };
+export { SidebarManager };
