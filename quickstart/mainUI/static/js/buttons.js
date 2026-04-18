@@ -123,3 +123,39 @@ async function setState(newState) {
 
     renderSidebar();
 }
+document.getElementById("newDocBtn")
+?.addEventListener("click", ()=>{
+
+window.location.href =
+"/Teamwork/ui-editor-module/editor.html";
+
+});
+/* =============================
+   OPEN EDITOR PAGE
+============================= */
+
+document.addEventListener("DOMContentLoaded", function(){
+
+const newDocBtn =
+document.getElementById("newDocBtn");
+
+if(newDocBtn){
+
+newDocBtn.addEventListener("click", function(){
+
+/*
+path explanation:
+
+src/mainUI → go up → Teamwork → ui-editor-module → editor.html
+*/
+
+window.location.href =
+"../../Teamwork/ui-editor-module/editor.html";
+
+});
+
+}
+
+});
+
+
