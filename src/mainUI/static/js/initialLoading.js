@@ -29,13 +29,10 @@ waitForEditorAPI
 fetchInitialFiles()
     .then(() => {
         // If Success: load the content of the main file into the editor
-        while (!window.editorAPI) {
-            window.editorAPI.loadValue(fileStore[mainFile]);
-            console.log("Loaded value into editor", fileStore[mainFile]);
-            console.log("Got server's Filestore", fileStore);
-        }
-
-    }
+        window.editorAPI.loadValue(fileStore[mainFile]);
+        console.log("Loaded value into editor", fileStore[mainFile]);
+        console.log("Got server's Filestore", fileStore);
+    })
     .catch((error) => {
         console.warn("Initialisation failed, editor not loaded", error);
     });

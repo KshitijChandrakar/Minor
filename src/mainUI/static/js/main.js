@@ -96,6 +96,7 @@ export const previewSvg = (mainContent) => {
             // contentDiv.style.height = "500px";
         })
         .catch((err) => {
+            hideLoadingScreen();
             console.timeEnd("Typst Render");
             console.error("Compilation Error:", err);
             RenderError(err);
@@ -103,55 +104,7 @@ export const previewSvg = (mainContent) => {
         });
     console.log("Done?");
 };
-let createPdfButton = document.getElementById("Download");
-createPdfButton.addEventListener("click", function () {
-    createPdf(fileStore[mainFile]);
-});
 
-export function createPdf(mainContent) {
-    console.time("Typst Compile");
-    console.log("Compiling with Content", mainContent);
-
-    try {
-        syncFilesToTypst();
-    } catch (syncError) {
-        console.timeEnd("Typst Compile");
-        console.error("Sync Error:", syncError);
-        RenderError(syncError);
-        return;
-    }
-
-    $typst
-        .pdf({ mainContent })
-        .then((pdfData) => {
-            console.timeEnd("Typst Compile");
-            console.log("PDF generated successfully");
-
-            try {
-                const pdfFile = new Blob([pdfData], {
-                    type: "application/pdf",
-                });
-                const link = document.createElement("a");
-                const url = URL.createObjectURL(pdfFile);
-
-                link.href = url;
-                link.target = "_blank";
-                link.download = "document.pdf"; // Add download attribute for better UX
-                link.click();
-
-                // Clean up
-                URL.revokeObjectURL(url);
-            } catch (blobError) {
-                console.error("Error creating PDF blob:", blobError);
-                RenderError(blobError);
-            }
-        })
-        .catch((err) => {
-            console.timeEnd("Typst Compile");
-            console.error("Compilation Error:", err);
-            RenderError(err);
-        });
-}
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // All files except the entry point are passed as the `files` payload so pandoc

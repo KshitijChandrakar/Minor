@@ -1,0 +1,97 @@
+:root {
+    --button-group-border: rgba(53, 52, 52, 0.25);
+
+    --regular-button-text: #000;
+
+    --regular-button-hover-bg: rgba(0, 0, 0, 0.05);
+
+    --selected-button-text: #fff;
+
+    --selection-bg: rgb(11 117 223);
+
+    --button-group-bg: #fff;
+}
+
+/* container */
+
+.button-group {
+    position: relative;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    width: 320px;
+
+    height: 40px;
+
+    border-radius: 9999px;
+
+    border: 1px solid var(--button-group-border);
+
+    background: var(--button-group-bg);
+
+    overflow: hidden;
+}
+
+/* sliding pill */
+
+.button-selection {
+    position: absolute;
+
+    top: 0;
+
+    left: 0;
+
+    height: 100%;
+
+    width: 25%;
+
+    background: var(--selection-bg);
+
+    border-radius: 9999px;
+
+    transition: transform 0.25s ease;
+
+    pointer-events: none;
+
+    z-index: 0;
+}
+
+/* buttons */
+
+.regularbutton {
+    flex: 1;
+
+    height: 100%;
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    color: var(--regular-button-text);
+
+    position: relative;
+
+    z-index: 1;
+}
+
+/* hover */
+
+.regularbutton:hover {
+    background: var(--regular-button-hover-bg);
+}
+
+/* selected text */
+
+.selectedbutton {
+    color: var(--selected-button-text);
+}

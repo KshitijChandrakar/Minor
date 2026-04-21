@@ -1,0 +1,138 @@
+<!-- templates/authentication/dashboard.html -->
+{% extends 'base.html' %} {% block content %}
+
+<!-- sdfsfdsdffds -->
+Welcome, {{ user.name }}!
+
+<!doctype html>
+<!-- Unordered list will be populated dynamically -->
+<ul id="project-list"></ul>
+
+<script>
+    // Immediately invoked function to fetch and render the list
+    (function () {
+        // API endpoint as specified
+        const API_URL = "/api/filesList";
+
+        // Get the container <ul> element
+        const listContainer = document.getElementById("project-list");
+
+        // Function to render the list items from the fetched data
+        function renderProjectList(filesArray) {
+            // Clear any existing content (e.g., placeholder or previous data)
+            listContainer.innerHTML = "";
+
+            // Validate that filesArray is an array and has items
+            if (!Array.isArray(filesArray) || filesArray.length === 0) {
+                // Optional: Show a message if no files are returned.
+                // Keeping functional and minimal: create a single li with text.
+                const emptyItem = document.createElement("li");
+                emptyItem.textContent = "No projects found.";
+                listContainer.appendChild(emptyItem);
+                return;
+            }
+
+            // Iterate over each element in the files array.
+            // According to spec: each element is an array: [projectID, projectName]
+            for (let i = 0; i < filesArray.length; i++) {
+                const project = filesArray[i];
+
+                // Defensive check: ensure project is an array with at least two items
+                if (!Array.isArray(project) || project.length < 2) {
+                    console.warn("Skipping invalid project entry:", project);
+                    continue;
+                }
+
+                const projectId = project[0];
+                const projectName = project[1];
+
+                // Validate that projectId is not null/undefined, projectName is usable
+                if (projectId == null || projectId === "") {
+                    console.warn(
+                        "Skipping entry with missing project ID:",
+                        project,
+                    );
+                    continue;
+                }
+
+                // Create list item element
+                const li = document.createElement("li");
+
+                // Create anchor element that links to /editor/projectID
+                const link = document.createElement("a");
+                // Build href using template literal: /editor/ + projectId
+                link.href = `/editor/${encodeURIComponent(projectId)}`;
+
+                // Set link text to projectName. If projectName is not provided, fallback to ID
+                const displayName =
+                    projectName != null && projectName !== ""
+                        ? projectName
+                        : `Project ${projectId}`;
+                link.textContent = displayName;
+
+                // Append link to list item
+                li.appendChild(link);
+
+                // Append list item to unordered list
+                listContainer.appendChild(li);
+            }
+
+            // If after loop no valid items were added (but filesArray was not empty due to filtering)
+            if (listContainer.children.length === 0 && filesArray.length > 0) {
+                const errorItem = document.createElement("li");
+                errorItem.textContent = "No valid projects to display.";
+                listContainer.appendChild(errorItem);
+            }
+        }
+
+        // Fetch data from the API
+        fetch(API_URL)
+            .then((response) => {
+                // Check if the response is ok (status in the range 200-299)
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                // Parse JSON body. Expecting object with 'files' property: { files: [[id, name], ...] }
+                return response.json();
+            })
+            .then((data) => {
+                // According to the specification: "returns a body with files: Array with [projectID, projectName]"
+                // The API response should contain a property named 'files' that holds the array.
+                // Defensive: handle different response shapes, but spec says "files: Array".
+                let projectsArray = null;
+
+                if (data && Array.isArray(data.files)) {
+                    projectsArray = data.files;
+                }
+                // Edge case: If the API returns the array directly (without wrapping in {files: ...})?
+                // The description: "it returns a body with files: Array" - might imply top-level 'files' property.
+                // But to be robust, if data is an array and no files property exists, assume data itself is the array.
+                else if (Array.isArray(data)) {
+                    projectsArray = data;
+                }
+                // Additional fallback: if data has a property that is array and sounds like files, but stick to spec.
+                else {
+                    // If none of above, treat as empty array and log warning.
+                    console.warn(
+                        "Unexpected API response structure. Expected { files: [[id, name], ...] } or array. Received:",
+                        data,
+                    );
+                    projectsArray = [];
+                }
+
+                // Render the list using the extracted array
+                renderProjectList(projectsArray);
+            })
+            .catch((error) => {
+                // Handle fetch errors (network issues, CORS, parsing, etc.)
+                console.error("Error fetching project files:", error);
+                // Display a fallback message inside the <ul> to inform the user functionally.
+                listContainer.innerHTML = "";
+                const errorItem = document.createElement("li");
+                errorItem.textContent =
+                    "Failed to load projects. Please check your connection or API endpoint.";
+                listContainer.appendChild(errorItem);
+            });
+    })();
+</script>
+{% endblock %}

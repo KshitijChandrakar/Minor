@@ -1,10 +1,40 @@
 <div class="flex flex-column">
     <div
-        class="bg-selected"
+        class="bg-selected flex justify-between"
         style="color: white; padding: 4px 8px; font-size: 14px; margin: 0"
     >
-        MEowow
-    </div>
+        <div>Preview</div>
 
+        <div style="position: relative; display: inline-block">
+            <button id="Download" class="regular_button">
+                <span class="material-symbols-outlined"> download </span>
+            </button>
+            <button
+                id="DropdownArrow"
+                aria-label="More export options"
+                style="margin-left: 4px"
+            >
+                ▼
+            </button>
+            <div
+                id="DropdownMenu"
+                style="
+                    display: none;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    background: white;
+                    border: 1px solid #ccc;
+                    z-index: 1000;
+                "
+            >
+                <div data-format="Markdown">Markdown</div>
+                <div data-format="Latex">Latex</div>
+                <div data-format="Typst">Typst</div>
+                <div data-format="HTML">HTML</div>
+                <div data-format="docx">docx</div>
+            </div>
+        </div>
+    </div>
     <div class="w-100 overflow-y-auto flex justify-center" id="content"></div>
 </div>

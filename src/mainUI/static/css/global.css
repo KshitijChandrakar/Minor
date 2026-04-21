@@ -1,30 +1,30 @@
 :root {
-    --button-group-border: rgba(53, 52, 52, 0.226);
+    --button-group-border: #3534343a;
     --regular-button-text: #000000;
-    --regular-button-hover-bg: rgba(0, 0, 0, 0.05);
-    --selected-button-text: #fff;
-    --selection-bg: rgb(11 117 223);
+    --regular-button-hover-bg: #0000000d;
+    --selected-button-text: #ffffff;
+    --selection-bg: #0b75df;
     --text: #03100e;
     --background: #f7fefd;
     --primary: #2ad7c9;
     --secondary: #c991ea;
     --accent: #df53ca;
-    --button-group-bg: #fff;
+    --button-group-bg: #ffffff;
 }
-
 body {
     background-color: var(--background);
 }
-
 .bg-selected {
     background-color: var(--selection-bg);
 }
-
 .button-group {
     --container_width: 300px;
     position: relative;
     display: inline-flex;
     align-items: center;
+    justify-content: space-between;
+    width: 320px;
+    height: 40px;
     border-radius: 9999px;
     background-color: var(--button-group-bg);
     color: var(--regular-button-text);
@@ -32,12 +32,10 @@ body {
     overflow: hidden;
     border: 1px solid var(--button-group-border);
 }
-
 .regular_button {
     flex: 1;
     padding: 10px;
-    cursor: pointer;
-    /* display: flex; */
+    cursor: pointer; /* display: flex; */
     justify-content: center;
     align-items: center;
     z-index: 1;
@@ -49,17 +47,14 @@ body {
     transition: color 0.15s ease;
     font-family: inherit;
 }
-
 .regular_button:hover {
     background-color: var(--regular-button-hover-bg);
 }
-
 .selected_button {
     color: var(--selected-button-text);
     background: transparent;
     border: none;
 }
-
 .button-selection {
     /* display: none;  needs to be none*/
     position: absolute;
@@ -73,11 +68,9 @@ body {
     transition: transform 0.2s ease;
     pointer-events: none;
 }
-
 .button-group.has-selection .button-selection {
     display: block;
 }
-
 .button-group[data-count="1"] .button-selection {
     width: 100%;
     transform: translateX(0%);
@@ -90,13 +83,10 @@ body {
 }
 .button-group[data-count="4"] .button-selection {
     width: 25%;
-}
-
-/* Sidebar Styles */
+} /* Sidebar Styles */
 .sidebar {
     display: none;
 }
-
 .sidebar.active {
     display: flex;
 }
@@ -115,12 +105,10 @@ body {
 }
 .sidebar-container {
 }
-
 .sidebar-header {
 }
 .sidebar-title {
 }
-
 #checkboxLivePreview {
     display: none;
 }

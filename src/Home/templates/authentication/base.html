@@ -44,8 +44,7 @@
                 font-weight: 500;
             }
 
-            input,
-            textarea {
+            input {
                 width: 100%;
                 padding: 10px;
                 border: 1px solid #ddd;
@@ -84,8 +83,7 @@
                 border: 1px solid #c3e6cb;
             }
 
-            .alert-error,
-            .alert-danger {
+            .alert-error {
                 background: #f8d7da;
                 color: #721c24;
                 border: 1px solid #f5c6cb;
@@ -110,13 +108,7 @@
                 margin-left: 20px;
             }
 
-            .nav-links a:hover {
-                text-decoration: underline;
-            }
-
-            h2,
-            h3,
-            h4 {
+            h2 {
                 margin-bottom: 20px;
                 color: #333;
             }
@@ -126,22 +118,6 @@
                 border-radius: 10px;
                 padding: 20px;
                 margin-bottom: 20px;
-            }
-
-            pre {
-                background: #f4f4f4;
-                padding: 10px;
-                border-radius: 5px;
-                overflow-x: auto;
-            }
-
-            .btn-secondary {
-                background: #6c757d;
-                margin-top: 10px;
-            }
-
-            .btn-secondary:hover {
-                background: #5a6268;
             }
         </style>
         {% block extra_css %}{% endblock %}
@@ -153,8 +129,10 @@
                 <div class="nav-links">
                     <span>Welcome, {{ user.name }}!</span>
                     <div>
-                        <a href="{% url 'dashboard' %}">Dashboard</a>
-                        <a href="{% url 'logout' %}">Logout</a>
+                        <a href="{% url 'authentication:dashboard' %}"
+                            >Dashboard</a
+                        >
+                        <a href="{% url 'authentication:logout' %}">Logout</a>
                     </div>
                 </div>
             </div>
@@ -162,7 +140,7 @@
             <div class="messages">
                 {% for message in messages %}
                 <div
-                    class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}"
+                    class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}"
                 >
                     {{ message }}
                 </div>
