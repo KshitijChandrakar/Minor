@@ -61,8 +61,7 @@ def logout_view(request):
 def dashboard_view(request):
     user = request.user
     context = {
-        'user': user,
-        'file_store': user.file_store,
+        'user': user
     }
     return render(request, 'authentication/dashboard.html', context)
 

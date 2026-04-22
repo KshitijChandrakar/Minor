@@ -18,7 +18,10 @@
 }
 .Dotei {
     font-family: "Pacifico";
+    text-align: center;
 }
+
+
 body {
     /* font-family: "Pacifico"; */
     background-color: var(--background);
