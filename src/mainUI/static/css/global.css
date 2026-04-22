@@ -2,11 +2,11 @@
     --button-group-border: #3534343a;
     --regular-button-text: #000000;
     --regular-button-hover-bg: #0000000d;
-    --selected-button-text: #ffffff;
-    --selection-bg: #0b75df;
+    --selected-button-text: #f0f5f2;
+    --selection-bg: #3e5b4d;
     --text: #03100e;
-    --background: #f7fefd;
-    --primary: #2ad7c9;
+    --background: #e1eae6;
+    --primary: #344c40;
     --secondary: #c991ea;
     --accent: #df53ca;
     --button-group-bg: #ffffff;
@@ -21,6 +21,9 @@
 }
 body {
     /* font-family: "Pacifico"; */
+    background-color: var(--background);
+}
+.bg-root {
     background-color: var(--background);
 }
 .bg-selected {
@@ -98,25 +101,6 @@ body {
 }
 .sidebar.active {
     display: flex;
-}
-.sidebar-toggle-btn {
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-    min-height: 50px;
-    max-width: 50px;
-    max-height: 50px;
-    font-size: 24px;
-    display: flex;
-    border: none;
-    align-items: center;
-    justify-content: center;
-}
-.sidebar-container {
-}
-.sidebar-header {
-}
-.sidebar-title {
 }
 #checkboxLivePreview {
     display: none;

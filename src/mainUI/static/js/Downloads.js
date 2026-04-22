@@ -53,7 +53,7 @@ export function createPdf(mainContent) {
 }
 
 const arrowBtn = document.getElementById("DropdownArrow");
-const menu = document.getElementById("DropdownMenu");
+const menu = document.getElementById("export-sidebar-content");
 
 export async function makeFiles(format) {
     const fromFormat = window.formatMap[window.currentState];
@@ -142,16 +142,6 @@ async function createAndDownloadZip(files, targetFormat) {
         `Zip file downloaded successfully with ${Object.keys(files).length} files`,
     );
 }
-
-arrowBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const isVisible = menu.style.display === "block";
-    menu.style.display = isVisible ? "none" : "block";
-});
-
-document.addEventListener("click", () => {
-    menu.style.display = "none";
-});
 
 menu.addEventListener("click", (e) => {
     const target = e.target.closest("[data-format]");
