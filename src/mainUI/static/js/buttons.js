@@ -23,15 +23,30 @@ function updateButtonStyles() {
             if (buttonGroup && buttonOptions.length > 0) {
                 const slider = buttonGroup.querySelector(".button-selection");
                 if (slider) {
-                    const percent =
-                        (selectedIndex / buttonOptions.length) * 100;
-                    slider.style.left = `${percent}%`;
-                    // console.log("moved to", percent);
+                    // Get the selected button element
+                    const selectedButton = document.querySelector(
+                        ".state-btn.selected_button",
+                    );
+
+                    if (selectedButton) {
+                        // Calculate the button's position and width
+                        const buttonRect =
+                            selectedButton.getBoundingClientRect();
+                        const containerRect =
+                            buttonGroup.getBoundingClientRect();
+
+                        // Set slider width to match the button
+                        slider.style.width = `${buttonRect.width}px`;
+
+                        // Calculate left position based on button's position relative to container
+                        const leftPosition =
+                            buttonRect.left - containerRect.left;
+                        slider.style.left = `${leftPosition}px`;
+                    }
                 }
             }
         } else {
             button.classList.remove("selected_button");
-            // button.classList.add("bg-red");
         }
     });
 }

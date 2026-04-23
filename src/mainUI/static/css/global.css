@@ -2,12 +2,14 @@
     --button-group-border: #3534343a;
     --regular-button-text: #000000;
     --regular-button-hover-bg: #0000000d;
-    --selected-button-text: #ffffff;
-    --selection-bg: #0b75df;
+    --selected-button-text: #f0f5f2;
+    --selection-bg: #3e5b4d;
     --text: #03100e;
-    --background: #f7fefd;
-    --primary: #2ad7c9;
-    --on_primary: #ffffff;
+<<<<<<< HEAD
+=======
+    --background: #e1eae6;
+    --primary: #344c40;
+>>>>>>> 397bea9e6a32cbbdc36fec468ab16c64ca026e11
     --secondary: #c991ea;
     --accent: #df53ca;
     --button-group-bg: #ffffff;
@@ -22,6 +24,9 @@
 }
 body {
     /* font-family: "Pacifico"; */
+    background-color: var(--background);
+}
+.bg-root {
     background-color: var(--background);
 }
 .bg-selected {
@@ -66,16 +71,15 @@ body {
     border: none;
 }
 .button-selection {
-    /* display: none;  needs to be none*/
     position: absolute;
     height: 100%;
-    width: calc(var(--container_width) / 4);
+    /* Remove this line: width: calc(var(--container_width) / 4); */
     z-index: 0;
     left: 0;
     top: 0;
     background-color: var(--selection-bg);
     border-radius: 9999px;
-    transition: transform 0.2s ease;
+    transition: all 0.2s ease; /* Changed from transform to all for smooth width changes */
     pointer-events: none;
 }
 .button-group.has-selection .button-selection {
@@ -99,25 +103,6 @@ body {
 }
 .sidebar.active {
     display: flex;
-}
-.sidebar-toggle-btn {
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-    min-height: 50px;
-    max-width: 50px;
-    max-height: 50px;
-    font-size: 24px;
-    display: flex;
-    border: none;
-    align-items: center;
-    justify-content: center;
-}
-.sidebar-container {
-}
-.sidebar-header {
-}
-.sidebar-title {
 }
 #checkboxLivePreview {
     display: none;

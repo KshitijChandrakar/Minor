@@ -13,6 +13,9 @@
 - [ ] Project Management
 - [ ] Real-Time Collaboration
 - [ ] Templates
+
+# Omitted
+
 - [ ] Academic Structure Validation
 - [ ] Format Compaitibility Analyzer
 

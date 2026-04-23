@@ -1,9 +1,9 @@
 {% extends 'base.html' %} {% load static %} {% block content %}
-<div class="flex flex-column pa3 justify-center">
+<div class="flex pa-3 flex-column justify-center">
     {% include 'mainUI/button.html' %}
     <div class="flex">
         {% include 'mainUI/sidebar.html' %}
-        <div class="mw-100 mh-100 flex w-100">
+        <div class="mw-100 mh-100 flex w-100 bg-white">
             {% include 'mainUI/textarea.html' %}
 
             <!-- sdfsdfsdf -->
@@ -20,6 +20,5 @@
         <script src="/static/js/jszip.min.js"></script>
         <link rel="stylesheet" href="/static/css/global.css" />
     </div>
-
-    {% include 'mainUI/Loading.html' %} {% endblock %}
 </div>
+{% include 'mainUI/Loading.html' %} {% endblock %}
