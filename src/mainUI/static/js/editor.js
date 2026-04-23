@@ -160,14 +160,32 @@ export const App = () => {
     const [mode, setMode] = useState("Typst");
     window.editorAPI["setMode"] = setMode;
 
+    const [lineCount, setLineCount] = useState(1);
     const [, tick] = useState(0);
     const bump = () => tick((n) => n + 1);
 
     const headingLevel = useRef(0);
     const mathState = useRef(0);
     const codeState = useRef(0);
+    const gutterRef = useRef(null);
+    const editorRef = useRef(null);
 
-    // Expose API on window
+    // Sync gutter scroll with editor scroll
+    const syncScroll = () => {
+        if (gutterRef.current && editorRef.current) {
+            gutterRef.current.scrollTop = editorRef.current.scrollTop;
+        }
+    };
+
+    // Count lines from editor value
+    const updateLineCount = (editorInstance) => {
+        const content = editorInstance.children
+            .map((node) => Node.string(node))
+            .join("\n");
+        const lines = content.split("\n").length;
+        setLineCount(Math.max(lines, editorInstance.children.length));
+    };
+
     useEffect(() => {
         window.editorAPI["getValue"] = () => getValue(editor);
         window.editorAPI["loadValue"] = (text) => loadValue(editor, text);
@@ -218,6 +236,25 @@ export const App = () => {
 
     const headingLabel = `H${headingLevel.current === 3 ? "↺" : headingLevel.current + 1}`;
 
+    // Build line number elements
+    const lineNumbers = Array.from({ length: lineCount }, (_, i) =>
+        React.createElement(
+            "div",
+            {
+                key: i,
+                style: {
+                    lineHeight: "1.5em", // must match editor line-height
+                    color: "#888",
+                    textAlign: "right",
+                    userSelect: "none",
+                    fontSize: "13px",
+                    paddingRight: "8px",
+                },
+            },
+            i + 1,
+        ),
+    );
+
     return React.createElement(
         React.Fragment,
         null,
@@ -225,12 +262,8 @@ export const App = () => {
         React.createElement(
             "div",
             { className: "toolbar" },
-            btn("B", () => doFormat("bold"), {
-                fontWeight: "bold",
-            }),
-            btn("I", () => doFormat("italic"), {
-                fontStyle: "italic",
-            }),
+            btn("B", () => doFormat("bold"), { fontWeight: "bold" }),
+            btn("I", () => doFormat("italic"), { fontStyle: "italic" }),
             btn(headingLabel, doHeading),
             btn(MATH_LABELS[mathState.current], () =>
                 doCycle(mathState, MATH_CYCLE),
@@ -240,56 +273,84 @@ export const App = () => {
             ),
         ),
 
-        // Editor
+        // Editor + gutter wrapper
         React.createElement(
-            Slate,
-            { editor, initialValue },
-            React.createElement(Editable, {
-                id: "slate-area",
-                renderLeaf: (props) => React.createElement(Leaf, props),
-                // DOM event listeners
-                onKeyUp: (event) => {
-                    console.log("Key pressed:", event.key);
-                    if (window.debouncedHandler)
-                        window.debouncedHandler(window.editorAPI.getValue());
-
-                    outliner();
-                    debounce(SaveToServer(window.editorAPI.getValue()), 5000);
+            "div",
+            {
+                style: {
+                    display: "flex",
+                    fontFamily: "monospace",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    height: "400px",
+                    overflow: "hidden",
                 },
+            },
 
-                onCopy: (event) => {
-                    // console.log("Content copied");
-                    // Access clipboard data if needed
-                    // const selection = window.getSelection();
-                    // console.log("Selected text:", selection.toString());
+            // ── Gutter ──
+            React.createElement(
+                "div",
+                {
+                    ref: gutterRef,
+                    style: {
+                        minWidth: "40px",
+                        padding: "8px 0",
+                        background: "#f5f5f5",
+                        borderRight: "1px solid #ddd",
+                        overflowY: "scroll", // scrolls in sync via JS, not independently
+                        flexShrink: 0,
+                    },
                 },
+                lineNumbers,
+            ),
 
-                onPaste: (event) => {
-                    // console.log("Content pasted");
-                    // Prevent default paste behavior if needed
-                    // event.preventDefault();
+            // ── Slate editor ──
+            React.createElement(
+                Slate,
+                {
+                    editor,
+                    initialValue,
+                    onChange: (value) => {
+                        // Recount lines on every change
+                        setLineCount(editor.children.length);
+                    },
                 },
-
-                onCut: (event) => {
-                    // console.log("Content cut");
-                },
-
-                onFocus: (event) => {
-                    // console.log("Editor focused");
-                },
-
-                onBlur: (event) => {
-                    // console.log("Editor blurred");
-                },
-
-                onDragStart: (event) => {
-                    // console.log("Drag started");
-                },
-
-                onDrop: (event) => {
-                    // console.log("Content dropped");
-                },
-            }),
+                React.createElement(Editable, {
+                    id: "slate-area",
+                    // ref: editorRef,
+                    style: {
+                        flex: 1,
+                        padding: "8px",
+                        lineHeight: "1.5em", // keep in sync with gutter
+                        overflowY: "auto",
+                        minHeight: "200px",
+                        height: "100%",
+                        outline: "none",
+                        boxSizing: "border-box",
+                    },
+                    renderLeaf: (props) => React.createElement(Leaf, props),
+                    onScroll: syncScroll,
+                    onKeyUp: (event) => {
+                        console.log("Key pressed:", event.key);
+                        if (window.debouncedHandler)
+                            window.debouncedHandler(
+                                window.editorAPI.getValue(),
+                            );
+                        outliner();
+                        debounce(
+                            SaveToServer(window.editorAPI.getValue()),
+                            5000,
+                        );
+                    },
+                    onCopy: (event) => {},
+                    onPaste: (event) => {},
+                    onCut: (event) => {},
+                    onFocus: (event) => {},
+                    onBlur: (event) => {},
+                    onDragStart: (event) => {},
+                    onDrop: (event) => {},
+                }),
+            ),
         ),
     );
 };
