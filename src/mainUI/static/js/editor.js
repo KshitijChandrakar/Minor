@@ -2,8 +2,10 @@ import React, {
     useState,
     useRef,
     useEffect,
+    useCallback,
 } from "https://esm.sh/react@19.0.0";
 import { createRoot } from "https://esm.sh/react-dom@19.0.0/client";
+import { createPortal } from "https://esm.sh/react-dom@19.0.0";
 import { createEditor, Transforms, Editor, Range } from "https://esm.sh/slate";
 import {
     Slate,
@@ -11,12 +13,11 @@ import {
     withReact,
 } from "https://esm.sh/slate-react?deps=react@19.0.0,react-dom@19.0.0";
 import { outliner } from "./outline.js";
-
 import { debounce } from "./HelperFunctions.js";
-
 import { SaveToServer } from "./UploadSave.js";
 
 window.editorAPI = {};
+
 // ── Syntax table ──────────────────────────────────────────────────────────────
 
 const SYNTAX = {
@@ -139,9 +140,7 @@ const Leaf = ({ attributes, children, leaf }) => {
     return React.createElement("span", attributes, el);
 };
 
-// ── App ───────────────────────────────────────────────────────────────────────
-
-const MODES = ["Markdown", "Typst", "LaTeX", "HTML"];
+// ── Initial value ─────────────────────────────────────────────────────────────
 
 const initialValue = [
     {
@@ -154,11 +153,13 @@ const initialValue = [
     },
 ];
 
-export const App = () => {
+// ── Shared Context ────────────────────────────────────────────────────────────
+
+const EditorContext = React.createContext(null);
+
+function EditorProvider({ children }) {
     const [editor] = useState(() => withReact(createEditor()));
     const [mode, setMode] = useState("Typst");
-    window.editorAPI["setMode"] = setMode;
-
     const [lineCount, setLineCount] = useState(1);
     const [, tick] = useState(0);
     const bump = () => tick((n) => n + 1);
@@ -167,27 +168,20 @@ export const App = () => {
     const mathState = useRef(0);
     const codeState = useRef(0);
     const gutterRef = useRef(null);
-    const editorRef = useRef(null);
 
-    // Sync gutter scroll with editor scroll
-    const syncScroll = () => {
-        if (gutterRef.current && editorRef.current) {
-            gutterRef.current.scrollTop = editorRef.current.scrollTop;
-        }
-    };
+    // FIX: Create the debounced save function once, not on every keystroke
+    const debouncedSave = useRef(
+        debounce((text) => SaveToServer(text), 5000),
+    ).current;
 
-    // Count lines from editor value
-    const updateLineCount = (editorInstance) => {
-        const content = editorInstance.children
-            .map((node) => Node.string(node))
-            .join("\n");
-        const lines = content.split("\n").length;
-        setLineCount(Math.max(lines, editorInstance.children.length));
-    };
+    // FIX: Create the debounced outliner call once too
+    const debouncedOutliner = useRef(debounce(() => outliner(), 300)).current;
 
     useEffect(() => {
-        window.editorAPI["getValue"] = () => getValue(editor);
-        window.editorAPI["loadValue"] = (text) => loadValue(editor, text);
+        // FIX: All editorAPI assignments in one place, one provider instance
+        window.editorAPI.getValue = () => getValue(editor);
+        window.editorAPI.loadValue = (text) => loadValue(editor, text);
+        window.editorAPI.setMode = (m) => setMode(m);
     }, [editor]);
 
     function doFormat(key) {
@@ -197,28 +191,70 @@ export const App = () => {
     }
 
     function doHeading() {
-        headingLevel.current = (headingLevel.current % 3) + 1;
-        const markers = resolve(mode, "heading", headingLevel.current);
-        if (!markers) return;
-        insertWrapped(editor, markers[0], markers[1]);
+        // FIX: cycle 0→1→2→3→0 so heading can be "turned off" (level 0 = no-op insert)
+        headingLevel.current = (headingLevel.current + 1) % 4;
         bump();
+        const markers = resolve(mode, "heading", headingLevel.current);
+        if (!markers) return; // level 0 falls through here — nothing inserted
+        insertWrapped(editor, markers[0], markers[1]);
     }
 
     function doCycle(stateRef, cycle) {
         stateRef.current = (stateRef.current + 1) % cycle.length;
         const key = cycle[stateRef.current];
-        if (!key) {
-            bump();
-            return;
-        }
-        const markers = resolve(mode, key);
-        if (!markers) {
-            bump();
-            return;
-        }
-        insertWrapped(editor, markers[0], markers[1]);
         bump();
+        if (!key) return; // state 0 = "off", nothing inserted
+        const markers = resolve(mode, key);
+        if (!markers) return;
+        insertWrapped(editor, markers[0], markers[1]);
     }
+
+    const handleKeyUp = useCallback(
+        (event) => {
+            const text = getValue(editor);
+
+            // FIX: call the external handler if set
+            if (window.debouncedHandler) {
+                window.debouncedHandler(text);
+            }
+
+            // FIX: debounce outliner so it's not called on every keystroke
+            debouncedOutliner();
+
+            // FIX: pass text into the debounced save; don't call SaveToServer immediately
+            debouncedSave(text);
+        },
+        [editor, debouncedSave, debouncedOutliner],
+    );
+
+    return React.createElement(
+        EditorContext.Provider,
+        {
+            value: {
+                editor,
+                mode,
+                lineCount,
+                setLineCount,
+                headingLevel,
+                mathState,
+                codeState,
+                gutterRef,
+                doFormat,
+                doHeading,
+                doCycle,
+                bump,
+                handleKeyUp,
+            },
+        },
+        children,
+    );
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────────
+
+export const ToolbarPane = () => {
+    const { headingLevel, mathState, codeState, doFormat, doHeading, doCycle } =
+        React.useContext(EditorContext);
 
     const btn = (label, onMD, style = {}) =>
         React.createElement(
@@ -233,16 +269,42 @@ export const App = () => {
             label,
         );
 
-    const headingLabel = `H${headingLevel.current === 3 ? "↺" : headingLevel.current + 1}`;
+    // FIX: level 0 means "next click will insert H1", so label shows what will happen
+    const headingLabel =
+        headingLevel.current === 0
+            ? "H1"
+            : headingLevel.current === 3
+              ? "H↺"
+              : `H${headingLevel.current + 1}`;
 
-    // Build line number elements
+    return React.createElement(
+        "div",
+        { className: "toolbar" },
+        btn("B", () => doFormat("bold"), { fontWeight: "bold" }),
+        btn("I", () => doFormat("italic"), { fontStyle: "italic" }),
+        btn(headingLabel, doHeading),
+        btn(MATH_LABELS[mathState.current], () =>
+            doCycle(mathState, MATH_CYCLE),
+        ),
+        btn(CODE_LABELS[codeState.current], () =>
+            doCycle(codeState, CODE_CYCLE),
+        ),
+    );
+};
+
+// ── Editor Pane ───────────────────────────────────────────────────────────────
+
+export const EditorPane = () => {
+    const { editor, lineCount, setLineCount, gutterRef, handleKeyUp } =
+        React.useContext(EditorContext);
+
     const lineNumbers = Array.from({ length: lineCount }, (_, i) =>
         React.createElement(
             "div",
             {
                 key: i,
                 style: {
-                    lineHeight: "1.5em", // must match editor line-height
+                    lineHeight: "1.5em",
                     color: "#888",
                     textAlign: "right",
                     userSelect: "none",
@@ -254,132 +316,111 @@ export const App = () => {
         ),
     );
 
-    return React.createElement(
-        React.Fragment,
-        null,
-        // Toolbar
-        React.createElement(
-            "div",
-            { className: "toolbar" },
-            btn("B", () => doFormat("bold"), { fontWeight: "bold" }),
-            btn("I", () => doFormat("italic"), { fontStyle: "italic" }),
-            btn(headingLabel, doHeading),
-            btn(MATH_LABELS[mathState.current], () =>
-                doCycle(mathState, MATH_CYCLE),
-            ),
-            btn(CODE_LABELS[codeState.current], () =>
-                doCycle(codeState, CODE_CYCLE),
-            ),
-        ),
+    // FIX: track scroll on the wrapper div, not the Editable itself,
+    // to ensure the event fires reliably across browsers
+    const editableWrapperRef = useRef(null);
 
-        // Editor + gutter wrapper
+    const handleScroll = useCallback(() => {
+        if (gutterRef.current && editableWrapperRef.current) {
+            gutterRef.current.scrollTop = editableWrapperRef.current.scrollTop;
+        }
+    }, [gutterRef]);
+
+    return React.createElement(
+        "div",
+        {
+            style: {
+                display: "flex",
+                fontFamily: "monospace",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                height: "400px",
+                overflow: "hidden",
+            },
+        },
+
+        // Gutter
         React.createElement(
             "div",
             {
+                ref: gutterRef,
                 style: {
-                    display: "flex",
-                    fontFamily: "monospace",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    height: "400px",
-                    overflow: "hidden",
+                    minWidth: "40px",
+                    padding: "8px 0",
+                    background: "#f5f5f5",
+                    borderRight: "1px solid #ddd",
+                    overflowY: "hidden", // FIX: gutter scrolls only via JS, not user
+                    flexShrink: 0,
                 },
             },
+            lineNumbers,
+        ),
 
-            // ── Gutter ──
-            React.createElement(
-                "div",
-                {
-                    ref: gutterRef,
-                    style: {
-                        minWidth: "40px",
-                        padding: "8px 0",
-                        background: "#f5f5f5",
-                        borderRight: "1px solid #ddd",
-                        overflowY: "scroll", // scrolls in sync via JS, not independently
-                        flexShrink: 0,
-                    },
+        // FIX: scrollable wrapper div around Slate so onScroll fires reliably
+        React.createElement(
+            "div",
+            {
+                ref: editableWrapperRef,
+                onScroll: handleScroll,
+                style: {
+                    flex: 1,
+                    overflowY: "auto",
+                    height: "100%",
                 },
-                lineNumbers,
-            ),
-
-            // ── Slate editor ──
+            },
             React.createElement(
                 Slate,
                 {
                     editor,
                     initialValue,
-                    onChange: (value) => {
-                        // Recount lines on every change
-                        setLineCount(editor.children.length);
-                    },
+                    onChange: () => setLineCount(editor.children.length),
                 },
                 React.createElement(Editable, {
-                    id: "slate-area",
-                    // ref: editorRef,
                     style: {
-                        flex: 1,
                         padding: "8px",
-                        lineHeight: "1.5em", // keep in sync with gutter
-                        overflowY: "auto",
-                        minHeight: "200px",
-                        height: "100%",
+                        lineHeight: "1.5em",
+                        minHeight: "100%",
                         outline: "none",
                         boxSizing: "border-box",
                     },
                     renderLeaf: (props) => React.createElement(Leaf, props),
-                    onScroll: syncScroll,
-                    onKeyUp: (event) => {
-                        console.log("Key pressed:", event.key);
-                        if (window.debouncedHandler)
-                            window.debouncedHandler(
-                                window.editorAPI.getValue(),
-                            );
-                        outliner();
-                        debounce(
-                            SaveToServer(window.editorAPI.getValue()),
-                            5000,
-                        );
-                    },
-                    onCopy: (event) => {},
-                    onPaste: (event) => {},
-                    onCut: (event) => {},
-                    onFocus: (event) => {},
-                    onBlur: (event) => {},
-                    onDragStart: (event) => {},
-                    onDrop: (event) => {},
+                    onKeyUp: handleKeyUp,
+                    // FIX: removed the no-op handlers so Slate's built-in
+                    // copy/paste/cut/focus/blur/drag/drop behaviour works correctly
                 }),
             ),
         ),
     );
 };
 
-const EditorDiv = document.getElementById("editor-root");
-if (!EditorDiv) {
-    console.log("UGGGhh No editor div?");
-}
-createRoot(EditorDiv).render(React.createElement(App));
+// ── Root: single provider, portal for toolbar ─────────────────────────────────
 
 export function RenderEditor() {
-    const EditorDiv = document.getElementById("editor-root");
-    if (!EditorDiv) {
-        console.log("UGGGhh No editor div?");
-    }
-    createRoot(EditorDiv).render(React.createElement(App));
+    const editorDiv = document.getElementById("editor-root");
+    const buttonsDiv = document.getElementById("editor_buttons_root");
+
+    if (!editorDiv) console.warn("No #editor_root div found.");
+    if (!buttonsDiv) console.warn("No #editor_buttons_root div found.");
+
+    // FIX: One EditorProvider wraps both panes.
+    // The toolbar is rendered into #editor_buttons_root via a portal so it
+    // lives in a different DOM location but shares the same React context.
+    const App = () =>
+        React.createElement(
+            EditorProvider,
+            null,
+            React.createElement(EditorPane),
+            // Portal keeps the shared context while mounting into a separate DOM node
+            buttonsDiv &&
+                createPortal(React.createElement(ToolbarPane), buttonsDiv),
+        );
+
+    createRoot(editorDiv).render(React.createElement(App));
 }
 
 window.editorAPI.RenderEditor = RenderEditor;
 
-export const waitForEditorAPI = new Promise((resolve) => {
-    if (window.editorAPI) {
-        resolve(window.editorAPI);
-        return;
-    }
+RenderEditor();
 
-    const checkInterval = setInterval(() => {
-        if (window.editorAPI) {
-            clearInterval(checkInterval);
-            resolve(window.editorAPI);
-        }
-    }, 100); // Check every 100ms
-});
+// FIX: waitForEditorAPI — editorAPI is set synchronously so just resolve immediately
+export const waitForEditorAPI = Promise.resolve(window.editorAPI);
