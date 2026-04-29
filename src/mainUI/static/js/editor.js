@@ -17,7 +17,6 @@ import { debounce } from "./HelperFunctions.js";
 import { SaveToServer } from "./UploadSave.js";
 
 window.editorAPI = {};
-// import { currentState } from "./buttons.js";
 // ── Syntax table ──────────────────────────────────────────────────────────────
 
 const SYNTAX = {

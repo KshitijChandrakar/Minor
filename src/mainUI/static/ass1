@@ -1,0 +1,606 @@
+
+= Assignment 1
+== Question 1
+
+
+
+
+
+
+
+
+=== A
+#figure(
+  align(center)[#table(
+    columns: 11,
+    align: (left,left,left,left,left,left,left,left,left,left,left,),
+    [Employee], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10],
+    [Salary], [42], [47], [-], [50], [55], [200], [48], [-], [46], [51],
+  )]
+  , kind: table
+  )
+
+
+
+
+
+
+
+
+Filling in Missing Values using the median
+
+
+
+
+
+
+
+
+Sorted -> ${42, 46, 47, 48, 50, 51, 55, 200}$
+
+
+
+
+ $ n = 8 $
+ $ "median" &=   (48 + 50) / 2 &= 49  $/
+
+
+
+
+
+
+
+
+Thus, the new inputted dataset = ${42, 47, 49, 50, 55, 200, 48, 49, 46, 51}$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== B. Outlier Detection using IQR 
+$ " Sorted Input Data = " {42, 47, 49, 50, 55, 200, 48, 49, 46, 51} $
+
+
+
+
+
+
+
+
+$ Q_1 = 47.5 $
+
+
+
+
+
+
+
+
+$ Q_3 = 51.5 $
+
+
+
+
+
+
+
+
+$ "IQR" = 51.5 - 47.5 = 4 $
+
+
+
+
+
+
+
+
+$ "Lower fence" = Q_1 - 1.5 * "IQR" = 41.5 $
+
+
+
+
+
+
+
+
+$ "Upper Fence" = Q_3 + 1.5 * "IQR" = 57.5 $
+
+
+
+
+
+
+
+
+Values above or below the Upper or Lower fence:
+$ {200} $
+On Removing Outliers  \
+$ {42, 46, 49, 50, 55, 48, 49, 46, 51} $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== C. MinMax Normalization after removing outliers
+Outlier Free Data = $ {42, 46, 49, 50, 55, 48, 49, 46, 51} $
+$ X_min = 42 $ 
+$ X_max = 55 $ 
+$ "Range" = X_max - X_min \
+ 55 - 42 = 13 $
+
+
+
+
+
+
+
+
+$ X_"norm" = (X - X_min)/"Range"\ 
+= (X - 42)/13 $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#table(
+    columns: 10,
+align: center,
+    [Salary], [42], [46], [47], [50], [55], [48], [46], [51], [55],
+    [Normalized], [0], [0.308], [0.395], [0.462], [538], [0.538], [0.615], [0.692], [1]
+  )
+
+
+
+
+
+
+
+
+=== D. Z-Score Standardization
+
+
+
+
+
+
+
+
+$ accent(X, macron) = (42 + 46 + 47 + 50 + 55 + 48 + 49 + 46 + 51 + 55)/9 = 48.55 $ 
+$ S ^ 2 = (sum a_i) / ( n - 1 )\ 
+= (42-48.35)^2 / 8 = 12.8 \
+S = sqrt(102.3/8) \ = 3.575
+$
+
+
+
+
+
+
+
+
+#table(
+columns: 10,
+align: center,
+    [Salary], [42], [46], [47], [50], [55], [48], [46], [51], [55],
+[Z-Score], [-1.83], [-0.71], [-0.44], [-0.16], [0.12], [0.12], [0.40], [0.68], [1.80],
+
+
+
+
+)
+
+
+
+
+== Question 2
+=== Given Data
+#table(
+  columns: 3,
+align: center,
+  [Age Group], [Frequency], [Mid Points], 
+  [10-20], [4], [15], 
+  [20-30], [10], [25],
+  [30-40], [18], [35],
+  [40-50], [12], [45],
+  [50-60], [6], [55], 
+)
+
+
+
+
+=== Mean Median Mode
+==== Mean
+$ overline(a) = sum_(i=0)^n (a_i)/n & "Where" & a_i & " Represents the" & i ^"th" & "element in A" $
+$ = (15 + 25 + 35 + 45 + 55)/2 \
+= 1810/50 \
+= 36.2
+$ 
+
+
+
+
+==== Median
+It is the $(n/2) ^"th"$ value 
+$
+ n/2 = 50 / 2 \ 
+= 25^"th" "value" $
+
+
+
+
+25 belongs to the 30-40 Bin, thus the median is 35.
+
+
+
+
+==== Mode
+
+
+
+
+$ "Mode" = L + frac(f_m - f_(m-1), (f_m - f_(m-1)) + (f_m - f_(m+1))) * h $
+Where $f_m$ is the frequency of the modal class and L is the Lower boundary of the modal class. \
+Thus, 
+$ = 30 + (18-10)/((18 - 10) + (18-12)) * 10 \ 
+= 20 + 0.5714 * 10 \
+= 35.714
+$
+
+
+
+
+=== Variance and Standard Deviation
+==== Variance
+
+
+
+
+$ sigma ^ 2 = sum_(i=1)^k ​f_i ​(m_i ​− overline(x) )^2 / ( n )​ $
+
+
+
+
+$ = (4 * (15 - 35.0)^2 + 10 * (25 - 35.0)^2 + 18 * (35 - 35.0)^2 + 12 * (45 - 35.0)^2 + 6 * (55 - 35.0)^2 )/ 50 \ = 124
+$
+==== Standard Deviation
+
+
+
+
+$ sigma = sqrt( sigma ^2) 
+= sqrt(124)
+= 11.135
+$
+
+
+
+
+=== Pearson's Skewness
+
+
+
+
+$ S_k = 3 dot (overline(x) - "Median") / sigma $
+$ 3 dot (36.2 - 35)/11.135 \
+= 0.3233 $
+
+
+
+
+The positive value close to 0 implies that the distribution of data is symmetric with a slight positive skewness
+
+
+
+
+=== Coefficient of Variation
+
+
+
+
+$ e_v  = (sigma / overline(X) ) dot 100 \ 
+= 11.135/36.2 \
+= 0.307
+$
+This implies a moderate relative variability
+
+
+
+
+== Question 3
+=== Given Data
+#table(
+  columns: 7,
+  align: center,
+  
+    [$X$ (hours)],
+
+
+
+
+  
+  [2], [4], [5], [6], [8], [9],
+    [$Y$ (score)],  [50], [60], [65], [70], [80], [85],
+)
+
+
+
+
+=== Covariance
+$ S_"xy" = 1/(n-1) dot sum_(i=1)^n (x_i - overline(x)) dot (y_i - overline(y)) $
+
+
+
+
+$ S_"xy" = 33.4 $
+
+
+
+
+=== Pearson Correlation Coefficient
+$ r = "Cov"(X,Y)/(sigma_x dot sigma_y)  \ 
+r = 33.4/(2.357 dot 11.785) \
+r = 1
+$
+
+
+
+
+Thus the relationship is highly positively correlated.
+
+
+
+
+=== Sample Skewness
+
+
+
+
+$ overline(y) = 68.33 \
+sigma_y = 11.79 \
+"Skewness" = 1/n dot sum (y-overline(y)) ^3/sigma_y^3 \
+"Kurtosis" = 1/n dot sum (y-overline(y)) ^4/sigma_y^4 - 3\
+$
+
+
+#table(
+columns: 7,
+[$y$], [50], [60], [65], [70], [80], [85],
+[$(y-overline(y))$], [-18.33], [-8.33], [-3.33], [1.67], [11.67], [16.67],
+[$(y-overline(y))^2$], [336.11], [69.44], [11.11], [2.78], [136.11], [277.78],
+[$(y-overline(y))^3$],[-6162.04], [-578.70], [-37.04], [4.63], [1587.96], [4629.63],
+[$(y-overline(y))^4$], [112970.68], [4822.53], [123.46], [7.72], [18526.23], [77160.49]
+)
+
+
+from this we get, 
+$ "Skewness" = -0.05\ 
+"Kurtosis" = -1.544 $
+
+
+Thus, the distribution is almost symmetric and platokurtic.
+
+
+=== Spearman Rank Correlation
+
+
+
+
+#table(
+columns: 7,
+[$x$], [2], [4], [5], [6], [8], [9],
+[Rank(x)], [1], [2], [3], [4], [5], [6],
+[$y$], [50], [60], [65], [70], [80], [85],
+[Rank(y)], [1], [2], [3], [4], [5], [6],
+[$d = "Rank"(x) - "Rank"(y)$], [0],[0],[0],[0],[0],[0],
+[$d^2$],  [0],[0],[0],[0],[0],[0]
+)
+
+
+$ rho_s = 1 - (6 sum d_i^2) / (n (n^2 - 1)) $
+
+
+$ n = 6 \
+rho_s = 1 - (6 dot 0)/(6 dot (6^2 -1 ))\
+rho_s = 1
+$
+
+
+The variables are perfectly correlated, this is the same as the pearson correlation.
+
+
+== Question 4
+$ "Sample Size"(n) = 36 \
+"Sample Mean"(overline(x)) = 480N \
+"Sample Standard Deviation"(sigma_x) = 24N $
+
+
+
+
+=== 95% Confidence Interval
+Formula: $ overline(x) plus.minus Z_(alpha/2) dot S/sqrt(n) $
+$ = 480 plus.minus 1.96 . 24/sqrt(36) \
+= 487.84, 472.16
+$
+Thus, we are 95% Confident that true population mean lies between 472.16N and 487.84N
+
+
+=== 99% Confidence Interval
+$ = 480 plus.minus 2.576 . 24/sqrt(36) \
+= 469.696, 490.304
+$
+
+
+=== To estimate $mu$ with an error margin of $E = 5N$ at $95%$ interval.
+$ n gt.eq (Z_(alpha/2) dot S / E )^2 \ "Where Z = 1.96, S = 24, E = 5"  \
+n = (1.96 dot 24 / 5 )^ 2 \
+n = 9.408 ^ 2 = 88.5105
+$
+
+
+=== Sampling Techniques
+
+
+== Question 5
+=== One Sample T Test
+Mean Lifetime = 1000 hours \
+n = 16 Sample\
+$overline(x)$ = 980 hours\
+s = 40 hours
+
+
+$ H_0: mu = 1000 \ H_1: mu eq.not 1000 $
+$ t = (overline(X) - mu_0)/(S/sqrt(N)) \ 
+t = (9.8 - 1000)/(40/sqrt(16)) 
+t = -2
+\
+t_"critical" = plus.minus 2.131 \
+|t| = 2 lt 2.131
+
+
+$
+Thus, we fail to reject $H_0$
+
+
+
+
+
+
+=== $chi^2$ Test of independence
+
+
+==== Given Data
+
+
+#table( columns:4,
+[], [Product A], [Product B], [ Row Total],
+[ Young ],
+[ 30 ],
+ [20 ],
+[ 50],
+[ Older ],
+ [15],
+ [35],
+ [50],
+[ Col Total ], 
+ [45],
+ [55],
+[ 100],
+)
+==== Hypotheses
+
+
+$H_0$: There is no significant association between Age Group and Product Preference \
+$H_1$: There is a significant association between Age Group and Product Preference
+
+
+
+
+
+
+==== Expected Frequencies
+#table( columns:3, 
+[], [Young], [Old],
+[Product A], [22.5] , [27.5],
+[Product B], [22.5], [27.5]
+)
+
+
+==== $chi^2$ Score
+$ chi^2 = sum ("Actual" - "Expected") ^ 2 / "Expected" \
+chi^2 = 9.overline(09) \
+chi_"critical"^2 = 3.841 \ 
+chi^2 > chi_"critical"^2
+$ 
+Thus, we reject $H_0$.
+
+
+
+
+
+
+=== One Way ANOVA
+
+
+#table( columns:6,
+[Method 1], [70], [72], [68], [74], [71], [Method 2], [80], [85], [78], [82], [80], [Method 3], [60], [62], [58], [64], [61]
+)
+==== Hypotheses
+$H_0$: There is no significant difference between the teaching methods \
+$H_1$: There is a significant difference between the teaching methods 
+
+
+==== Means
+$
+mu_"Method 1" = 71 \
+mu_"Method 2" = 81 \
+mu_"Method 3" = 61 \
+"Grand Mean" = 71
+$
+
+
+==== Sum of Squares Between groups
+$ "SSB" = sum n_i dot (X_i - overline(X))^2 \
+"SSB" = 1000
+$
+
+
+==== Sum of squares within groups
+$ "SSW" =  sum_j^k sum_i^n (x_"ij" - overline(x))^2 
+\ "SSW" = 68
+$
+
+
+==== Degrees of Freedom
+$ "df"_"ssb" = k - 1 = 2 \
+"df"_"ssw" = n - k = 12 
+$
+
+
+
+
+$ "MSB" = 1000/2 = 500\
+"MSW" = 68/12 = 5.67 \
+F = 500/5.67 = 88.18
+F_"critical" = 3.89
+F > F_"critical"
+$
+Thus, we reject the null hypothesis.
+
+
+
+
+
+

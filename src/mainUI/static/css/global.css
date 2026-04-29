@@ -7,6 +7,7 @@
     --text: #03100e;
     --background: #e1eae6;
     --primary: #344c40;
+    --primary-bg: #ffffff;
     --secondary: #c991ea;
     --accent: #df53ca;
     --button-group-bg: #ffffff;
@@ -27,4 +28,20 @@ body {
     background-color: var(--background);
 }
 
+.sidebar-toggle-btn {
+    background: var(--primary-bg);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
 
+.sidebar-toggle-btn:hover {
+    background: var(--regular-button-hover-bg);
+}
+
+.sidebar-toggle-btn.active {
+    background: var(--selection-bg);
+    color: var(--selected-button-text);
+    border-color: var(--selection-bg);
+}

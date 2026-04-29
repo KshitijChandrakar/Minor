@@ -2,6 +2,9 @@ import {} from "/static/js/buttons.js";
 import { fileStore, mainFile, activeFile, renderSidebar } from "./files.js";
 import "/static/js/jszip.min.js";
 
+import { RenderError } from "./errors.js";
+import { syncFilesToTypst } from "/static/js/main.js";
+
 let createPdfButton = document.getElementById("Download");
 createPdfButton.addEventListener("click", function () {
     createPdf(fileStore[mainFile]);
@@ -148,7 +151,11 @@ menu.addEventListener("click", (e) => {
     if (target) {
         const format = target.getAttribute("data-format");
         // console.log(`Selected format: ${format}`);
-        makeFiles(format);
+        if (format == "pdf") {
+            createPdf(fileStore[mainFile]);
+        } else {
+            makeFiles(format);
+        }
         // Here you would implement the actual export logic for each format
         menu.style.display = "none";
     }

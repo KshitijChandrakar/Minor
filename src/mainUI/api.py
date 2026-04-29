@@ -153,6 +153,7 @@ def filesChange(request):
         status=200,
     )
 
+
 @csrf_exempt
 @login_required
 def filesList(request):
@@ -161,7 +162,7 @@ def filesList(request):
 
         # Get the file_store from user model
         file_store = user.file_store
-        #print("Type filestore", type(file_store["123"]), file_store)
+        # print("Type filestore", type(file_store["123"]), file_store)
         response = [
             (i, file_store.get(i).get("project_name", "Default ID")) for i in file_store
         ]
@@ -183,7 +184,7 @@ def filesList(request):
             return JsonResponse(
                 {
                     "success": True,
-                    #"project_id": projectID,
+                    # "project_id": projectID,
                     "files": [],
                     "message": "No files found for this project",
                 },
@@ -195,17 +196,18 @@ def filesList(request):
         return JsonResponse(
             {"success": False, "message": f"Error fetching files: {str(e)}"}, status=500
         )
-    
+
 
 @csrf_exempt
-@login_required   
+@login_required
 def createProject(request, project_name):
     try:
         import random
+
         hash = random.getrandbits(128)
         user = request.user
         file_store = user.file_store
-        welcome_strings =["HOIIHI", "BLEHH", "KONICHIWAAA", "ANNEYEONGHASEYOO"]
+        welcome_strings = ["HOIIHI", "BLEHH", "KONICHIWAAA", "ANNEYEONGHASEYOO"]
         file_store[str(hash)] = {
             "project_name": project_name,
             "main_file": "main.typ",
@@ -223,10 +225,8 @@ def createProject(request, project_name):
         )
 
     except Exception as e:
-        print(e)
-        return JsonResponse(
-            {"success": False, "message": f"Error creating project_file: {str(e)}"}, status=500
-        )
-
-
-
+        pass
+        # print(e)
+        # return JsonResponse(
+        #     {"success": False, "message": f"Error creating project_file: {str(e)}"}, status=500
+        # )

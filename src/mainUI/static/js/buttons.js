@@ -1,14 +1,13 @@
 import { fileStore, mainFile, activeFile, renderSidebar } from "./files.js";
 import { previewSvg } from "./main.js";
-
 const buttonOptions = ["Typst", "Markdown", "LaTeX", "HTML"];
 
 // Exposed globally so main.js debouncedHandler can read it
 window.formatMap = {
     Typst: "typst",
-    Markdown: "markdown",
+    Markdown: "markdown-auto_identifiers",
     LaTeX: "latex-auto_identifiers",
-    HTML: "html",
+    HTML: "html-auto_identifiers",
 };
 
 window.currentState = "Typst";

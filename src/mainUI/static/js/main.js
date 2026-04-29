@@ -61,7 +61,7 @@ loadTypst()
 
 // ─── Preview ─────────────────────────────────────────────────────────────────
 let lastContent = null;
-function syncFilesToTypst() {
+export function syncFilesToTypst() {
     for (const [name, content] of Object.entries(fileStore)) {
         // mapShadow overlays a file into Typst's in-memory FS at the given path.
         // Use addSource for .typ files (parsed as Typst source),

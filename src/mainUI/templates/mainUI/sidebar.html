@@ -62,9 +62,9 @@
 
     /* Additional custom styles to complement Tachyons */
     .sidebar-toggle-btn {
-        background: var(--button-group-bg);
-        border: 1px solid var(--button-group-border);
-        color: var(--regular-button-text);
+        background: var(--primary-bg);
+        border: 1px solid var(--primary);
+        color: var(--primary);
         cursor: pointer;
         transition: all 0.2s ease;
     }
@@ -179,8 +179,6 @@
                     height="24px"
                     viewBox="0 -960 960 960"
                     width="24px"
-                    fill="#e3e3e3"
-                    style="fill: #e3e3e3"
                     class="sidebar-svg"
                 >
                     <path
@@ -198,8 +196,6 @@
                     height="24px"
                     viewBox="0 -960 960 960"
                     width="24px"
-                    fill="#e3e3e3"
-                    style="fill: #e3e3e3"
                     class="sidebar-svg"
                 >
                     <path
@@ -217,8 +213,6 @@
                     height="24px"
                     viewBox="0 -960 960 960"
                     width="24px"
-                    fill="#e3e3e3"
-                    style="fill: #e3e3e3"
                     class="sidebar-svg"
                 >
                     <path
@@ -236,8 +230,6 @@
                     height="24px"
                     viewBox="0 -960 960 960"
                     width="24px"
-                    fill="#e3e3e3"
-                    style="fill: #e3e3e3"
                     class="sidebar-svg"
                 >
                     <path
@@ -296,6 +288,7 @@
             <span class="sidebar-title">Export</span>
         </div>
         <div id="export-sidebar-content" class="overflow-auto flex-grow-1">
+            <div data-format="pdf">PDF</div>
             <div data-format="Markdown">Markdown</div>
             <div data-format="Latex">Latex</div>
             <div data-format="Typst">Typst</div>
