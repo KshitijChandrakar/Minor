@@ -169,7 +169,7 @@
     <div class="flex flex-column">
         <div class="sidebar-toggle-buttons flex flex-column mw-10">
             <button
-                id="Download"
+                id="Download1"
                 class="sidebar-toggle-btn ma1 pa2 br2"
                 data-sidebar="export"
                 title="Export"
@@ -287,14 +287,18 @@
         <div class="sidebar-header">
             <span class="sidebar-title">Export</span>
         </div>
-        <div id="export-sidebar-content" class="overflow-auto flex-grow-1">
-            <div data-format="pdf">PDF</div>
-            <div data-format="Markdown">Markdown</div>
-            <div data-format="Latex">Latex</div>
-            <div data-format="Typst">Typst</div>
-            <div data-format="HTML">HTML</div>
-            <div data-format="docx">docx</div>
-        </div>
+
+        <ul
+            id="export-sidebar-content"
+            class="sidebar-list overflow-auto flex-grow-1"
+        >
+            <li data-format="pdf">PDF</li>
+            <li data-format="Markdown">Markdown</li>
+            <li data-format="Latex">Latex</li>
+            <li data-format="Typst">Typst</li>
+            <li data-format="HTML">HTML</li>
+            <li data-format="docx">docx</li>
+        </ul>
     </div>
 </div>
 <script type="module" src="/static/js/sidebar.js"></script>

@@ -10,9 +10,10 @@
 - [x] Implementation of Language Servers
 - [x] Document Hiearchy
 - [ ] User Roles and Permission
-- [ ] Project Management
+- [x] Project Management
 - [ ] Real-Time Collaboration
 - [ ] Templates
+- [ ] Syntax Highlighting
 
 # Omitted
 
@@ -21,7 +22,6 @@
 
 # Problems
 
-- No documentation for Pandoc's WASM
 - Conversion Conflicts, How to manage less feature-complete formats during merging - For Example, convert
 
 ```typ

@@ -5,10 +5,10 @@ import "/static/js/jszip.min.js";
 import { RenderError } from "./errors.js";
 import { syncFilesToTypst } from "/static/js/main.js";
 
-let createPdfButton = document.getElementById("Download");
-createPdfButton.addEventListener("click", function () {
-    createPdf(fileStore[mainFile]);
-});
+// let createPdfButton = document.getElementById("Download");
+// createPdfButton.addEventListener("click", function () {
+//     createPdf(fileStore[mainFile]);
+// });
 
 export function createPdf(mainContent) {
     console.time("Typst Compile");
@@ -150,13 +150,14 @@ menu.addEventListener("click", (e) => {
     const target = e.target.closest("[data-format]");
     if (target) {
         const format = target.getAttribute("data-format");
-        // console.log(`Selected format: ${format}`);
+
+        console.log(`Selected format: ${format}`);
         if (format == "pdf") {
             createPdf(fileStore[mainFile]);
         } else {
             makeFiles(format);
         }
         // Here you would implement the actual export logic for each format
-        menu.style.display = "none";
+        // menu.style.display = "none";
     }
 });

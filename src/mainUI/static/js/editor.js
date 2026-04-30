@@ -18,6 +18,96 @@ import { SaveToServer } from "./UploadSave.js";
 
 window.editorAPI = {};
 
+// ── Prism language mapping ────────────────────────────────────────────────────
+const PRISM_LANG = {
+    Markdown: "markdown",
+    LaTeX: "latex",
+    HTML: "html",
+    Typst: "clike", // fallback – replace with a custom Typst grammar if available
+};
+
+// ── Helper: flatten Prism tokens into flat ranges ─────────────────────────────
+function flattenTokens(tokens, start = 0) {
+    const ranges = [];
+    let pos = start;
+    for (const token of tokens) {
+        if (typeof token === "string") {
+            pos += token.length;
+        } else {
+            const len = token.content.length;
+            ranges.push({ start: pos, end: pos + len, type: token.type });
+            if (Array.isArray(token.content)) {
+                ranges.push(...flattenTokens(token.content, pos));
+            }
+            pos += len;
+        }
+    }
+    return ranges;
+}
+
+/**
+ * Create decorations for a single Slate node.
+ * @param {Object} node - The Slate element node (e.g. { type: 'paragraph', children: [...] })
+ * @param {number[]} path - Path of the node in the document
+ * @param {string} prismLang - The Prism language string
+ * @returns {Array} decorations array
+ */
+function makeNodeDecorations(node, path, prismLang) {
+    // Concatenate all leaf texts into one string
+    const blockText = node.children.map((leaf) => leaf.text).join("");
+    // Tokenize with Prism (must be loaded globally)
+    const tokens = Prism.tokenize(blockText, Prism.languages[prismLang]);
+    const ranges = flattenTokens(tokens);
+    if (ranges.length === 0) return [];
+
+    // Build leaf start offsets within this node
+    let leafStart = 0;
+    const leafOffsets = node.children.map((leaf) => {
+        const offset = leafStart;
+        leafStart += leaf.text.length;
+        return offset;
+    });
+
+    const decorations = [];
+
+    // For each Prism range, find the leaf(s) it belongs to and create decorations
+    for (const { start, end, type } of ranges) {
+        let rangeStart = start;
+        let rangeEnd = end;
+        let currentLeaf = 0;
+
+        while (currentLeaf < node.children.length && rangeStart < rangeEnd) {
+            const leafStartOffset = leafOffsets[currentLeaf];
+            const leafEndOffset =
+                leafStartOffset + node.children[currentLeaf].text.length;
+
+            if (rangeStart < leafEndOffset) {
+                const anchorOffset = Math.max(rangeStart - leafStartOffset, 0);
+                const focusOffset =
+                    Math.min(rangeEnd, leafEndOffset) - leafStartOffset;
+
+                if (focusOffset > anchorOffset) {
+                    decorations.push({
+                        anchor: {
+                            path: [...path, currentLeaf],
+                            offset: anchorOffset,
+                        },
+                        focus: {
+                            path: [...path, currentLeaf],
+                            offset: focusOffset,
+                        },
+                        prismType: type, // used by Leaf component
+                    });
+                }
+                rangeStart = leafEndOffset;
+            }
+            currentLeaf++;
+        }
+    }
+
+    return decorations;
+}
+
 // ── Syntax table ──────────────────────────────────────────────────────────────
 
 const SYNTAX = {
@@ -135,6 +225,16 @@ const CODE_LABELS = ["<>", "<>`", "<>```"];
 
 const Leaf = ({ attributes, children, leaf }) => {
     let el = children;
+    if (leaf.prismType) {
+        el = React.createElement(
+            "span",
+            {
+                className: `token ${leaf.prismType}`,
+                ...attributes,
+            },
+            el,
+        );
+    }
     if (leaf.bold) el = React.createElement("strong", null, el);
     if (leaf.italic) el = React.createElement("em", null, el);
     return React.createElement("span", attributes, el);
@@ -169,20 +269,28 @@ function EditorProvider({ children }) {
     const codeState = useRef(0);
     const gutterRef = useRef(null);
 
-    // FIX: Create the debounced save function once, not on every keystroke
+    // Debounced save and outliner (created once)
     const debouncedSave = useRef(
         debounce((text) => SaveToServer(text), 5000),
     ).current;
-
-    // FIX: Create the debounced outliner call once too
     const debouncedOutliner = useRef(debounce(() => outliner(), 300)).current;
 
     useEffect(() => {
-        // FIX: All editorAPI assignments in one place, one provider instance
         window.editorAPI.getValue = () => getValue(editor);
         window.editorAPI.loadValue = (text) => loadValue(editor, text);
         window.editorAPI.setMode = (m) => setMode(m);
     }, [editor]);
+
+    // ➔ Fixed decorate: works per node, using the node’s path
+    const decorate = useCallback(
+        ([node, path]) => {
+            // Only decorate block-level nodes that have children (text nodes are leaf-level)
+            if (!node.children) return [];
+            const prismLang = PRISM_LANG[mode] || "markdown";
+            return makeNodeDecorations(node, path, prismLang);
+        },
+        [mode],
+    );
 
     function doFormat(key) {
         const markers = resolve(mode, key);
@@ -191,11 +299,10 @@ function EditorProvider({ children }) {
     }
 
     function doHeading() {
-        // FIX: cycle 0→1→2→3→0 so heading can be "turned off" (level 0 = no-op insert)
         headingLevel.current = (headingLevel.current + 1) % 4;
         bump();
         const markers = resolve(mode, "heading", headingLevel.current);
-        if (!markers) return; // level 0 falls through here — nothing inserted
+        if (!markers) return;
         insertWrapped(editor, markers[0], markers[1]);
     }
 
@@ -203,7 +310,7 @@ function EditorProvider({ children }) {
         stateRef.current = (stateRef.current + 1) % cycle.length;
         const key = cycle[stateRef.current];
         bump();
-        if (!key) return; // state 0 = "off", nothing inserted
+        if (!key) return;
         const markers = resolve(mode, key);
         if (!markers) return;
         insertWrapped(editor, markers[0], markers[1]);
@@ -212,16 +319,10 @@ function EditorProvider({ children }) {
     const handleKeyUp = useCallback(
         (event) => {
             const text = getValue(editor);
-
-            // FIX: call the external handler if set
             if (window.debouncedHandler) {
                 window.debouncedHandler(text);
             }
-
-            // FIX: debounce outliner so it's not called on every keystroke
             debouncedOutliner();
-
-            // FIX: pass text into the debounced save; don't call SaveToServer immediately
             debouncedSave(text);
         },
         [editor, debouncedSave, debouncedOutliner],
@@ -244,6 +345,7 @@ function EditorProvider({ children }) {
                 doCycle,
                 bump,
                 handleKeyUp,
+                decorate, // ← exposed to EditorPane
             },
         },
         children,
@@ -270,7 +372,6 @@ export const ToolbarPane = () => {
             label,
         );
 
-    // FIX: level 0 means "next click will insert H1", so label shows what will happen
     const headingLabel =
         headingLevel.current === 0
             ? "H1"
@@ -292,11 +393,18 @@ export const ToolbarPane = () => {
         ),
     );
 };
+
 // ── Editor Pane ───────────────────────────────────────────────────────────────
 
 export const EditorPane = () => {
-    const { editor, lineCount, setLineCount, gutterRef, handleKeyUp } =
-        React.useContext(EditorContext);
+    const {
+        editor,
+        lineCount,
+        setLineCount,
+        gutterRef,
+        handleKeyUp,
+        decorate, // ← taken from context
+    } = React.useContext(EditorContext);
 
     const lineNumbers = Array.from({ length: lineCount }, (_, i) =>
         React.createElement(
@@ -316,8 +424,6 @@ export const EditorPane = () => {
         ),
     );
 
-    // FIX: track scroll on the wrapper div, not the Editable itself,
-    // to ensure the event fires reliably across browsers
     const editableWrapperRef = useRef(null);
 
     const handleScroll = useCallback(() => {
@@ -338,7 +444,6 @@ export const EditorPane = () => {
                 overflow: "hidden",
             },
         },
-
         // Gutter
         React.createElement(
             "div",
@@ -349,14 +454,13 @@ export const EditorPane = () => {
                     padding: "8px 0",
                     background: "#f5f5f5",
                     borderRight: "1px solid #ddd",
-                    overflowY: "hidden", // FIX: gutter scrolls only via JS, not user
+                    overflowY: "hidden",
                     flexShrink: 0,
                 },
             },
             lineNumbers,
         ),
-
-        // FIX: scrollable wrapper div around Slate so onScroll fires reliably
+        // Scrollable wrapper
         React.createElement(
             "div",
             {
@@ -385,8 +489,7 @@ export const EditorPane = () => {
                     },
                     renderLeaf: (props) => React.createElement(Leaf, props),
                     onKeyUp: handleKeyUp,
-                    // FIX: removed the no-op handlers so Slate's built-in
-                    // copy/paste/cut/focus/blur/drag/drop behaviour works correctly
+                    decorate: decorate, // ← the missing piece!
                 }),
             ),
         ),
@@ -402,15 +505,11 @@ export function RenderEditor() {
     if (!editorDiv) console.warn("No #editor_root div found.");
     if (!buttonsDiv) console.warn("No #editor_buttons_root div found.");
 
-    // FIX: One EditorProvider wraps both panes.
-    // The toolbar is rendered into #editor_buttons_root via a portal so it
-    // lives in a different DOM location but shares the same React context.
     const App = () =>
         React.createElement(
             EditorProvider,
             null,
             React.createElement(EditorPane),
-            // Portal keeps the shared context while mounting into a separate DOM node
             buttonsDiv &&
                 createPortal(React.createElement(ToolbarPane), buttonsDiv),
         );
@@ -422,5 +521,4 @@ window.editorAPI.RenderEditor = RenderEditor;
 
 RenderEditor();
 
-// FIX: waitForEditorAPI — editorAPI is set synchronously so just resolve immediately
 export const waitForEditorAPI = Promise.resolve(window.editorAPI);
