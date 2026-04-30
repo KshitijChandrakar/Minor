@@ -1,4 +1,6 @@
 :root {
+    --clr: #f7c6a1;
+    --clr-alpha: rgb(247, 197, 159, 0.1);
     --button-group-border: #3534343a;
     --regular-button-text: #000000;
     --regular-button-hover-bg: #0000000d;
@@ -8,7 +10,10 @@
     --background: #e1eae6;
     --primary: #344c40;
     --primary-bg: #ffffff;
-    --secondary: #c991ea;
+    --on-primary: #ffffff;
+    --secondary-bg: #fbe3d0;
+    --secondary: #f7c6a1;
+    --on-secondary: #f3aa72;
     --accent: #df53ca;
     --button-group-bg: #ffffff;
 }

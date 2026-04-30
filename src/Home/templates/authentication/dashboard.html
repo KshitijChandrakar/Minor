@@ -342,19 +342,7 @@
 </style>
 
 <!-- NAV -->
-<nav class="nav">
-    <div></div>
-    <div class="nav-logo">
-        <span class="Dotei">Dotei</span>
-    </div>
-    <div class="nav-user">
-        <div class="nav-user-inner">
-            <div class="avatar" id="nav-avatar">—</div>
-            <span class="nav-username" id="nav-username">Loading…</span>
-        </div>
-    </div>
-</nav>
-
+{% include "authentication/nav.html" %}
 <!-- PAGE -->
 <div class="page">
     <!-- HEADER ROW -->
@@ -364,24 +352,34 @@
                 Welcome back, <span id="hero-name">{{ user.name }}</span> 👋
             </h1>
         </div>
-        <button onclick="createProject()">Create Project</button>
+        <button class="switchButton" onclick="createProject()">
+            Create Project
+        </button>
 
-<script>
-  function createProject() {
-    const projectName = prompt('Enter project name:');
-    if (!projectName) return;
+        <script>
+            function createProject() {
+                const projectName = prompt("Enter project name:");
+                if (!projectName) return;
 
-    fetch(`/api/createProject/${encodeURIComponent(projectName)}`, { method: 'GET' })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.message || 'Server error'); });
+                fetch(`/api/createProject/${encodeURIComponent(projectName)}`, {
+                    method: "GET",
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            return response.json().then((err) => {
+                                throw new Error(err.message || "Server error");
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(
+                        (data) =>
+                            (window.location.href =
+                                "/editor/" + data.project_id),
+                    )
+                    .catch((error) => alert(`Error: ${error.message}`));
             }
-            return response.json();
-        })
-        .then(data => window.location.href = '/editor/' + data.project_id)
-        .catch(error => alert(`Error: ${error.message}`));
-}
-</script>
+        </script>
     </div>
 
     <!-- TABLE CARD -->

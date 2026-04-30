@@ -260,6 +260,7 @@ export const ToolbarPane = () => {
         React.createElement(
             "button",
             {
+                className: "toolbar_button ma1 pa2 br2",
                 onMouseDown: (e) => {
                     e.preventDefault();
                     onMD();
@@ -291,7 +292,6 @@ export const ToolbarPane = () => {
         ),
     );
 };
-
 // ── Editor Pane ───────────────────────────────────────────────────────────────
 
 export const EditorPane = () => {

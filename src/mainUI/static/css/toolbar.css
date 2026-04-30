@@ -1,0 +1,11 @@
+.toolbar_button {
+    background: var(--primary-bg);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toolbar_button:hover {
+    background: var(--regular-button-hover-bg);
+}
