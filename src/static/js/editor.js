@@ -11,20 +11,24 @@ import {
     Slate,
     Editable,
     withReact,
+    ReactEditor,
 } from "https://esm.sh/slate-react?deps=react@19.0.0,react-dom@19.0.0";
+import { withHistory } from "https://esm.sh/slate-history";
 import { outliner } from "./outline.js";
 import { debounce } from "./HelperFunctions.js";
 import { SaveToServer } from "./UploadSave.js";
+import {
+    SYNTAX,
+    resolve,
+    MATH_CYCLE,
+    CODE_CYCLE,
+    MATH_LABELS,
+    initialValue,
+    CODE_LABELS,
+    PRISM_LANG,
+} from "./editorHelpers.js";
 
 window.editorAPI = {};
-
-// ── Prism language mapping ────────────────────────────────────────────────────
-const PRISM_LANG = {
-    Markdown: "markdown",
-    LaTeX: "latex",
-    HTML: "html",
-    Typst: "clike", // fallback – replace with a custom Typst grammar if available
-};
 
 // ── Helper: flatten Prism tokens into flat ranges ─────────────────────────────
 function flattenTokens(tokens, start = 0) {
@@ -47,20 +51,13 @@ function flattenTokens(tokens, start = 0) {
 
 /**
  * Create decorations for a single Slate node.
- * @param {Object} node - The Slate element node (e.g. { type: 'paragraph', children: [...] })
- * @param {number[]} path - Path of the node in the document
- * @param {string} prismLang - The Prism language string
- * @returns {Array} decorations array
  */
 function makeNodeDecorations(node, path, prismLang) {
-    // Concatenate all leaf texts into one string
     const blockText = node.children.map((leaf) => leaf.text).join("");
-    // Tokenize with Prism (must be loaded globally)
     const tokens = Prism.tokenize(blockText, Prism.languages[prismLang]);
     const ranges = flattenTokens(tokens);
     if (ranges.length === 0) return [];
 
-    // Build leaf start offsets within this node
     let leafStart = 0;
     const leafOffsets = node.children.map((leaf) => {
         const offset = leafStart;
@@ -69,8 +66,6 @@ function makeNodeDecorations(node, path, prismLang) {
     });
 
     const decorations = [];
-
-    // For each Prism range, find the leaf(s) it belongs to and create decorations
     for (const { start, end, type } of ranges) {
         let rangeStart = start;
         let rangeEnd = end;
@@ -96,7 +91,7 @@ function makeNodeDecorations(node, path, prismLang) {
                             path: [...path, currentLeaf],
                             offset: focusOffset,
                         },
-                        prismType: type, // used by Leaf component
+                        prismType: type,
                     });
                 }
                 rangeStart = leafEndOffset;
@@ -104,64 +99,10 @@ function makeNodeDecorations(node, path, prismLang) {
             currentLeaf++;
         }
     }
-
     return decorations;
 }
 
-// ── Syntax table ──────────────────────────────────────────────────────────────
-
-const SYNTAX = {
-    Markdown: {
-        bold: ["**", "**"],
-        italic: ["_", "_"],
-        heading: (l) => (l === 0 ? null : ["#".repeat(l) + " ", ""]),
-        mathInline: ["$", "$"],
-        mathBlock: ["\n$$\n", "\n$$\n"],
-        codeInline: ["`", "`"],
-        codeBlock: ["\n```\n", "\n```\n"],
-    },
-    Typst: {
-        bold: ["*", "*"],
-        italic: ["_", "_"],
-        heading: (l) => (l === 0 ? null : ["=".repeat(l) + " ", ""]),
-        mathInline: ["$", "$"],
-        mathBlock: ["$ ", " $"],
-        codeInline: ["`", "`"],
-        codeBlock: ["```\n", "\n```"],
-    },
-    LaTeX: {
-        bold: ["\\textbf{", "}"],
-        italic: ["\\textit{", "}"],
-        heading: (l) => {
-            if (l === 0) return null;
-            return [
-                ["\\section{", "\\subsection{", "\\subsubsection{"][l - 1],
-                "}",
-            ];
-        },
-        mathInline: ["\\(", "\\)"],
-        mathBlock: ["\n\\[\n", "\n\\]\n"],
-        codeInline: ["\\texttt{", "}"],
-        codeBlock: ["\n\\begin{verbatim}\n", "\n\\end{verbatim}\n"],
-    },
-    HTML: {
-        bold: ["<b>", "</b>"],
-        italic: ["<i>", "</i>"],
-        heading: (l) => (l === 0 ? null : [`<h${l}>`, `</h${l}>`]),
-        mathInline: ["$", "$"],
-        mathBlock: ["\n$$\n", "\n$$\n"],
-        codeInline: ["<code>", "</code>"],
-        codeBlock: ["<pre><code>\n", "\n</code></pre>"],
-    },
-};
-
-function resolve(mode, key, ...args) {
-    const entry = (SYNTAX[mode] || SYNTAX.Markdown)[key];
-    return typeof entry === "function" ? entry(...args) : entry;
-}
-
 // ── Slate helpers ─────────────────────────────────────────────────────────────
-
 function insertWrapped(editor, open, close) {
     const { selection } = editor;
     const hasSelection = selection && !Range.isCollapsed(selection);
@@ -194,7 +135,6 @@ function insertWrapped(editor, open, close) {
 }
 
 // ── getValue / loadValue ──────────────────────────────────────────────────────
-
 export function getValue(editor) {
     return editor.children
         .map((node) => node.children.map((leaf) => leaf.text).join(""))
@@ -214,15 +154,7 @@ export function loadValue(editor, text) {
     });
 }
 
-// ── Cycle config ──────────────────────────────────────────────────────────────
-
-const MATH_CYCLE = [null, "mathInline", "mathBlock"];
-const CODE_CYCLE = [null, "codeInline", "codeBlock"];
-const MATH_LABELS = ["M", "M·$", "M·$$"];
-const CODE_LABELS = ["<>", "<>`", "<>```"];
-
 // ── Leaf ──────────────────────────────────────────────────────────────────────
-
 const Leaf = ({ attributes, children, leaf }) => {
     let el = children;
     if (leaf.prismType) {
@@ -240,25 +172,11 @@ const Leaf = ({ attributes, children, leaf }) => {
     return React.createElement("span", attributes, el);
 };
 
-// ── Initial value ─────────────────────────────────────────────────────────────
-
-const initialValue = [
-    {
-        type: "paragraph",
-        children: [
-            {
-                text: "Select text and use the toolbar, or place cursor to insert markers.",
-            },
-        ],
-    },
-];
-
 // ── Shared Context ────────────────────────────────────────────────────────────
-
 const EditorContext = React.createContext(null);
 
 function EditorProvider({ children }) {
-    const [editor] = useState(() => withReact(createEditor()));
+    const [editor] = useState(() => withHistory(withReact(createEditor())));
     const [mode, setMode] = useState("Typst");
     const [lineCount, setLineCount] = useState(1);
     const [, tick] = useState(0);
@@ -269,7 +187,7 @@ function EditorProvider({ children }) {
     const codeState = useRef(0);
     const gutterRef = useRef(null);
 
-    // Debounced save and outliner (created once)
+    // Debounced save and outliner
     const debouncedSave = useRef(
         debounce((text) => SaveToServer(text), 5000),
     ).current;
@@ -281,10 +199,8 @@ function EditorProvider({ children }) {
         window.editorAPI.setMode = (m) => setMode(m);
     }, [editor]);
 
-    // ➔ Fixed decorate: works per node, using the node’s path
     const decorate = useCallback(
         ([node, path]) => {
-            // Only decorate block-level nodes that have children (text nodes are leaf-level)
             if (!node.children) return [];
             const prismLang = PRISM_LANG[mode] || "markdown";
             return makeNodeDecorations(node, path, prismLang);
@@ -328,6 +244,10 @@ function EditorProvider({ children }) {
         [editor, debouncedSave, debouncedOutliner],
     );
 
+    // ── Undo / Redo actions exposed via context ──────────────────
+    const undo = useCallback(() => editor.undo(), [editor]);
+    const redo = useCallback(() => editor.redo(), [editor]);
+
     return React.createElement(
         EditorContext.Provider,
         {
@@ -345,7 +265,9 @@ function EditorProvider({ children }) {
                 doCycle,
                 bump,
                 handleKeyUp,
-                decorate, // ← exposed to EditorPane
+                decorate,
+                undo,
+                redo,
             },
         },
         children,
@@ -353,10 +275,18 @@ function EditorProvider({ children }) {
 }
 
 // ── Toolbar ───────────────────────────────────────────────────────────────────
-
 export const ToolbarPane = () => {
-    const { headingLevel, mathState, codeState, doFormat, doHeading, doCycle } =
-        React.useContext(EditorContext);
+    const {
+        headingLevel,
+        mathState,
+        codeState,
+        doFormat,
+        doHeading,
+        doCycle,
+        undo,
+        redo,
+        editor,
+    } = React.useContext(EditorContext);
 
     const btn = (label, onMD, style = {}) =>
         React.createElement(
@@ -379,9 +309,22 @@ export const ToolbarPane = () => {
               ? "H↺"
               : `H${headingLevel.current + 1}`;
 
+    // Undo/Redo handlers that also focus the editor
+    const handleUndo = useCallback(() => {
+        undo();
+        ReactEditor.focus(editor);
+    }, [undo, editor]);
+
+    const handleRedo = useCallback(() => {
+        redo();
+        ReactEditor.focus(editor);
+    }, [redo, editor]);
+
     return React.createElement(
         "div",
         { className: "toolbar" },
+        btn("↩", handleUndo),
+        btn("↪", handleRedo),
         btn("B", () => doFormat("bold"), { fontWeight: "bold" }),
         btn("I", () => doFormat("italic"), { fontStyle: "italic" }),
         btn(headingLabel, doHeading),
@@ -395,7 +338,6 @@ export const ToolbarPane = () => {
 };
 
 // ── Editor Pane ───────────────────────────────────────────────────────────────
-
 export const EditorPane = () => {
     const {
         editor,
@@ -403,7 +345,7 @@ export const EditorPane = () => {
         setLineCount,
         gutterRef,
         handleKeyUp,
-        decorate, // ← taken from context
+        decorate,
     } = React.useContext(EditorContext);
 
     const lineNumbers = Array.from({ length: lineCount }, (_, i) =>
@@ -431,6 +373,22 @@ export const EditorPane = () => {
             gutterRef.current.scrollTop = editableWrapperRef.current.scrollTop;
         }
     }, [gutterRef]);
+
+    // ── Keyboard shortcuts for undo/redo ────────────────────────
+    const onKeyDown = useCallback(
+        (event) => {
+            if (!event.ctrlKey && !event.metaKey) return;
+            if (event.key === "z") {
+                event.preventDefault();
+                if (event.shiftKey) {
+                    editor.redo();
+                } else {
+                    editor.undo();
+                }
+            }
+        },
+        [editor],
+    );
 
     return React.createElement(
         "div",
@@ -489,7 +447,8 @@ export const EditorPane = () => {
                     },
                     renderLeaf: (props) => React.createElement(Leaf, props),
                     onKeyUp: handleKeyUp,
-                    decorate: decorate, // ← the missing piece!
+                    onKeyDown: onKeyDown,
+                    decorate: decorate,
                 }),
             ),
         ),
@@ -497,7 +456,6 @@ export const EditorPane = () => {
 };
 
 // ── Root: single provider, portal for toolbar ─────────────────────────────────
-
 export function RenderEditor() {
     const editorDiv = document.getElementById("editor-root");
     const buttonsDiv = document.getElementById("editor_buttons_root");
