@@ -22,4 +22,5 @@ urlpatterns = [
     path("api/filesList", api.filesList),
     # path("", views.homepage),
     path("api/createProject/<str:project_name>", api.createProject),
+    # path("ws/<str:room>", YjsConsumer.as_asgi()),
 ]

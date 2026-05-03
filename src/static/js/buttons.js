@@ -12,7 +12,7 @@ window.formatMap = {
 
 window.currentState = "Typst";
 
-function updateButtonStyles() {
+export function updateButtonStyles() {
     document.querySelectorAll(".state-btn").forEach((button) => {
         if (button.textContent === window.currentState) {
             button.classList.add("selected_button");

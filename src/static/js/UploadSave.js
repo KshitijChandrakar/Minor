@@ -1,12 +1,13 @@
+import { convertor } from "./PandocLoader.js";
 import { debounce } from "./HelperFunctions.js";
 import { filesChanged, activeFile, fileStore } from "./files.js";
 
-export async function SaveToServer(s) {
+export async function SaveToServer() {
     // Check if the active file has been changed
     if (filesChanged[activeFile] != true) return;
 
     // Get the content from fileStore if the file hasn't been changed
-    const fileContent = fileStore[activeFile];
+    const fileContent = await convertor(fileStore[activeFile]);
     let projectId = window.projectId;
 
     // If you want to only send the active file that has changed:
