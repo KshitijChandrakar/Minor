@@ -51,6 +51,49 @@ def filesFetch(request, projectID):
         )
 
 
+@csrf_exempt
+@login_required
+def getMainFile(request, projectID):
+    """
+    Fetch Main file name for the authenticated user based on project_id
+    """
+    try:
+        user = request.user
+
+        # Get the file_store from user model
+        file_store = user.file_store
+
+        # If file_store is a dictionary with project_id as key
+        if projectID in file_store:
+            main_file = file_store[projectID]["main_file"]
+            return JsonResponse(
+                {
+                    "success": True,
+                    "project_id": projectID,
+                    "main_file": main_file,
+                    "message": "Files retrieved successfully",
+                },
+                status=200,
+            )
+        else:
+            # Return empty list if project not found
+            return JsonResponse(
+                {
+                    "success": True,
+                    "project_id": projectID,
+                    "main_file": "main.typ",
+                    "message": "No files found for this project",
+                },
+                status=200,
+            )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": f"Error fetching files: {str(e)}"}, status=500
+        )
+    pass
+
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods

@@ -1,3 +1,4 @@
+import { convertorJSON } from "./PandocLoader.js";
 import React, {
     useState,
     useRef,
@@ -14,9 +15,17 @@ import {
     ReactEditor,
 } from "https://esm.sh/slate-react?deps=react@19.0.0,react-dom@19.0.0";
 import { withHistory } from "https://esm.sh/slate-history";
+import * as DiffUtils from "/static/js/editorCollab.js";
+
+// import { WebsocketProvider } from "https://esm.sh/y-websocket";
+// import {} from // withYjs,
+// YjsEditor,
+// withCursors,   // removed – causes esrever error
+// CursorEditor,  // removed
+// ("https://esm.sh/slate-yjs");
 import { outliner } from "./outline.js";
 import { debounce } from "./HelperFunctions.js";
-import { SaveToServer } from "./UploadSave.js";
+import { SaveToServer, SaveToYdoc } from "./UploadSave.js";
 import {
     SYNTAX,
     resolve,
@@ -27,6 +36,7 @@ import {
     CODE_LABELS,
     PRISM_LANG,
 } from "./editorHelpers.js";
+import { activeFile, fileStore } from "./files.js";
 
 window.editorAPI = {};
 
@@ -142,6 +152,7 @@ export function getValue(editor) {
 }
 
 export function loadValue(editor, text) {
+    // console.log(text);
     const newNodes = text.split("\n").map((line) => ({
         type: "paragraph",
         children: [{ text: line }],
@@ -153,7 +164,6 @@ export function loadValue(editor, text) {
         Transforms.insertNodes(editor, newNodes, { at: [0] });
     });
 }
-
 // ── Leaf ──────────────────────────────────────────────────────────────────────
 const Leaf = ({ attributes, children, leaf }) => {
     let el = children;
@@ -172,6 +182,16 @@ const Leaf = ({ attributes, children, leaf }) => {
     return React.createElement("span", attributes, el);
 };
 
+async function changeValueOfActiveFile(text) {
+    fileStore[activeFile] = await convertorJSON(text);
+    console.log(
+        "Converted the current value to JSON",
+        text,
+        "Converted",
+        fileStore[activeFile],
+    );
+}
+
 // ── Shared Context ────────────────────────────────────────────────────────────
 const EditorContext = React.createContext(null);
 
@@ -189,8 +209,9 @@ function EditorProvider({ children }) {
 
     // Debounced save and outliner
     const debouncedSave = useRef(
-        debounce((text) => SaveToServer(text), 5000),
+        debounce((text) => SaveToYdoc(text, activeFile), 5000),
     ).current;
+
     const debouncedOutliner = useRef(debounce(() => outliner(), 300)).current;
 
     useEffect(() => {
@@ -235,6 +256,8 @@ function EditorProvider({ children }) {
     const handleKeyUp = useCallback(
         (event) => {
             const text = getValue(editor);
+            changeValueOfActiveFile(text);
+
             if (window.debouncedHandler) {
                 window.debouncedHandler(text);
             }
@@ -479,4 +502,16 @@ window.editorAPI.RenderEditor = RenderEditor;
 
 RenderEditor();
 
-export const waitForEditorAPI = Promise.resolve(window.editorAPI);
+export function waitForEditorAPI() {
+    return new Promise((resolve) => {
+        const check = setInterval(() => {
+            if (
+                window.editorAPI &&
+                typeof window.editorAPI.loadValue === "function"
+            ) {
+                clearInterval(check);
+                resolve();
+            }
+        }, 100);
+    });
+}

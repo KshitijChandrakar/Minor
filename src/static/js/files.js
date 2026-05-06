@@ -3,7 +3,7 @@
 // { filename: string → content: string }
 
 export let fileStore = {
-    "main.typ": "Hello, Try typing in the textbox to the right to render.",
+    // "main.typ": "Hello, Try typing in the textbox to the right to render.",
 };
 export let activeFile = "main.typ";
 export let mainFile = "main.typ";
@@ -217,10 +217,12 @@ export function renderSidebar() {
 
     renderFileInfo();
 }
+
+import { convertorJSON } from "./PandocLoader.js";
 export function switchToFile(name) {
     // Save current textarea → fileStore before switching
     if (window.editorAPI.getValue)
-        fileStore[activeFile] = window.editorAPI.getValue();
+        fileStore[activeFile] = convertorJSON(window.editorAPI.getValue());
 
     const sidebar = document.getElementById("files-sidebar");
     const list = sidebar.querySelector(".sidebar-list");

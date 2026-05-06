@@ -1,4 +1,5 @@
 import { fileStore, mainFile, activeFile, renderSidebar } from "./files.js";
+import { convertorFromJSON, convertorJSON } from "./PandocLoader.js";
 import { previewSvg } from "./main.js";
 const buttonOptions = ["Typst", "Markdown", "LaTeX", "HTML"];
 
@@ -65,75 +66,78 @@ async function setState(newState) {
     const oldState = window.currentState;
     window.currentState = newState;
     window.editorAPI.setMode(newState);
+
     const fromFormat = window.formatMap[oldState];
     const toFormat = window.formatMap[newState];
 
     updateButtonStyles();
 
-    fileStore[activeFile] = window.editorAPI.getValue();
+    // fileStore[activeFile] = await convertorJSON(window.editorAPI.getValue());
 
     // Convert every file individually from old format → new format.
-    // We also keep a typst-converted copy of the main file for the preview.
-    const fileNames = Object.keys(fileStore);
-    const convertedMap = {}; // name → converted string
-
-    for (const name of fileNames) {
-        try {
-            const result = await window.pandocModule.convert(
-                {
-                    from: fromFormat,
-                    to: toFormat,
-                    "output-file": "output.txt",
-                    "resource-path": ["."],
-                },
-                fileStore[name],
-                {},
-            );
-
-            if (result.files?.["output.txt"]) {
-                convertedMap[name] = await result.files["output.txt"].text();
-            } else {
-                // Conversion produced no output — keep original content
-                convertedMap[name] = fileStore[name];
-            }
-        } catch (err) {
-            console.error(`Conversion failed for "${name}":`, err);
-            convertedMap[name] = fileStore[name]; // fallback: keep original
-        }
-    }
+    // // We also keep a typst-converted copy of the main file for the preview.
+    // const fileNames = Object.keys(fileStore);
+    // const convertedMap = {}; // name → converted string
+    //
+    // for (const name of fileNames) {
+    //     try {
+    //         const result = await window.pandocModule.convert(
+    //             {
+    //                 from: fromFormat,
+    //                 to: toFormat,
+    //                 "output-file": "output.txt",
+    //                 "resource-path": ["."],
+    //             },
+    //             fileStore[name],
+    //             {},
+    //         );
+    //
+    //         if (result.files?.["output.txt"]) {
+    //             convertedMap[name] = await result.files["output.txt"].text();
+    //         } else {
+    //             // Conversion produced no output — keep original content
+    //             convertedMap[name] = fileStore[name];
+    //         }
+    //     } catch (err) {
+    //         console.error(`Conversion failed for "${name}":`, err);
+    //         convertedMap[name] = fileStore[name]; // fallback: keep original
+    //     }
+    // }
 
     // Write all converted content back into fileStore
-    for (const [name, content] of Object.entries(convertedMap)) {
-        fileStore[name] = content;
-    }
+    // for (const [name, content] of Object.entries(convertedMap)) {
+    //     fileStore[name] = content;
+    // }
 
-    window.editorAPI.loadValue(fileStore[activeFile] ?? "");
+    let convertedText = await convertorFromJSON(fileStore[activeFile] ?? "");
+
+    window.editorAPI.loadValue(convertedText);
 
     // Update the preview using the main file.
     // If the new format is Typst, preview directly.
     // Otherwise convert mainFile → typst for the preview.
-    if (newState === "Typst") {
-        previewSvg(fileStore[mainFile] ?? "");
-    } else {
-        try {
-            const previewResult = await window.pandocModule.convert(
-                {
-                    from: toFormat,
-                    to: "typst",
-                    "output-file": "output.txt",
-                    "resource-path": ["."],
-                },
-                fileStore[mainFile] ?? "",
-                {},
-            );
-
-            if (previewResult.files?.["output.txt"]) {
-                previewSvg(await previewResult.files["output.txt"].text());
-            }
-        } catch (err) {
-            console.error("Preview conversion failed:", err);
-        }
-    }
+    // if (newState === "Typst") {
+    //     previewSvg(fileStore[mainFile] ?? "");
+    // } else {
+    //     try {
+    //         const previewResult = await window.pandocModule.convert(
+    //             {
+    //                 from: toFormat,
+    //                 to: "typst",
+    //                 "output-file": "output.txt",
+    //                 "resource-path": ["."],
+    //             },
+    //             fileStore[mainFile] ?? "",
+    //             {},
+    //         );
+    //
+    //         if (previewResult.files?.["output.txt"]) {
+    //             previewSvg(await previewResult.files["output.txt"].text());
+    //         }
+    //     } catch (err) {
+    //         console.error("Preview conversion failed:", err);
+    //     }
+    // }
 
     renderSidebar();
 }

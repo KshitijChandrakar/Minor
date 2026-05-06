@@ -48,26 +48,96 @@ export async function convertor(text) {
     }
 }
 
+function waitForFormatMap() {
+    return new Promise((resolve) => {
+        const check = setInterval(() => {
+            if (window.formatMap) {
+                clearInterval(check);
+                resolve();
+            }
+        }, 50);
+    });
+}
+
+function waitForPandoc() {
+    return new Promise((resolve) => {
+        const check = setInterval(() => {
+            if (window.pandocModule) {
+                clearInterval(check);
+                resolve();
+            }
+        }, 50);
+    });
+}
+// RenderEditor();
+// await waitForEditorAPI();
+export async function convertorFromJSON(text) {
+    await waitForFormatMap();
+    let fromFormat = window.formatMap[window.currentState];
+    try {
+        await waitForPandoc();
+        const previewResult = await window.pandocModule.convert(
+            {
+                from: "json",
+                to: fromFormat,
+                "output-file": "output.txt",
+                "resource-path": ["."],
+            },
+            text ?? "",
+            {},
+        );
+        // console.warn(fromFormat + text);
+        // console.log(await previewResult.files["output.txt"].text());
+        let convertedText = await previewResult.files["output.txt"].text();
+        console.log("Converting from json", text, "converted", convertedText);
+        return await convertedText;
+    } catch (err) {
+        console.error("conversion failed:", err, "Error Text is ", text);
+    }
+}
 export async function convertorJSON(text) {
     const startTime = performance.now(); // Start timer
     let fromFormat = window.formatMap[window.currentState];
-    if (fromFormat == "typst")
-        try {
-            const previewResult = await window.pandocModule.convert(
-                {
-                    from: fromFormat,
-                    to: "json",
-                    "output-file": "output.txt",
-                    "resource-path": ["."],
-                },
-                text ?? "",
-                {},
-            );
-            const textContent = await previewResult.files["output.txt"].text();
-            const elapsed = performance.now() - startTime; // Calculate elapsed time
-            console.log(`[${elapsed}ms]`, textContent); // Log with timer
-            return textContent;
-        } catch (err) {
-            console.error("conversion failed:", err);
-        }
+    try {
+        const previewResult = await window.pandocModule.convert(
+            {
+                from: fromFormat,
+                to: "json",
+                "output-file": "output.txt",
+                "resource-path": ["."],
+            },
+            text ?? "",
+            {},
+        );
+        const textContent = await previewResult.files["output.txt"].text();
+        const elapsed = performance.now() - startTime; // Calculate elapsed time
+        console.log(`[${elapsed}ms]`, textContent); // Log with timer
+        return textContent;
+    } catch (err) {
+        console.error("conversion failed:", err);
+    }
+}
+
+export async function convertorTypst(text) {
+    const startTime = performance.now(); // Start timer
+    // let fromFormat = window.formatMap[window.currentState];
+    // if (fromFormat == "typst")
+    try {
+        const previewResult = await window.pandocModule.convert(
+            {
+                from: "json",
+                to: "typst",
+                "output-file": "output.txt",
+                "resource-path": ["."],
+            },
+            text ?? "",
+            {},
+        );
+        const textContent = await previewResult.files["output.txt"].text();
+        const elapsed = performance.now() - startTime; // Calculate elapsed time
+        console.log(`[${elapsed}ms]`, textContent); // Log with timer
+        return textContent;
+    } catch (err) {
+        console.error("conversion failed:", err);
+    }
 }

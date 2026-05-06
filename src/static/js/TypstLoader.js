@@ -1,4 +1,5 @@
 import { previewSvg } from "./main.js";
+import { convertorTypst} from "./PandocLoader.js";
 let typstLoaded = false;
 let typstLoadingPromise = null;
 
@@ -34,7 +35,9 @@ window.loadTypst = async function () {
 loadTypst()
     .then(() => {
         console.log("Loaded Typst");
-        previewSvg(fileStore[mainFile] ?? "");
+        let convertedText = await convertorTypst(fileStore[mainFile] ?? "");
+        previewSvg(convertedText);
+
     })
     .catch((err) => {
         console.error("Failed to load Typst:", err);

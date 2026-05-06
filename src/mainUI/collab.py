@@ -1,6 +1,6 @@
+import asyncio
 from y_py import YDoc, YText
 from channels_yroom.consumer import YroomConsumer
-
 
 import y_py as Y
 from asgiref.sync import async_to_sync
@@ -11,53 +11,58 @@ from ypy_websocket.yutils import create_update_message
 
 
 class CollaborationConsumer(YjsConsumer):
+    # ----- YDoc cache per room -----
+    _room_docs = {}  # room_name -> Y.YDoc
+    _room_docs_lock = None  # lazy-initialized asyncio.Lock
+
+    @classmethod
+    async def _get_lock(cls):
+        if cls._room_docs_lock is None:
+            cls._room_docs_lock = asyncio.Lock()
+        return cls._room_docs_lock
+
+    async def make_ydoc(self) -> Y.YDoc:
+        room = self.room_name
+        lock = await self._get_lock()
+        async with lock:
+            if room in self._room_docs:
+                return self._room_docs[room]
+
+            doc = Y.YDoc()
+            user = self.scope.get("user", None)
+
+            if user is None or user.is_anonymous:
+                print("user was none")
+                self._room_docs[room] = doc
+                return doc
+
+            files = user.file_store.get(room, None)
+            if files is not None:
+                for file, value in files["files"].items():
+                    text = doc.get_text(file)
+                    current = text.to_json()
+                    if not current:  # only write if truly empty
+                        with doc.begin_transaction() as txn:
+                            text.extend(txn, value)
+
+            self._room_docs[room] = doc
+            return doc
+
     def make_room_name(self) -> str:
         roomname = self.scope.get("url_route", {}).get("kwargs", {}).get("room_name")
         print(f"Making room with id {roomname}, route is {self.scope}")
         return roomname
 
-    async def make_ydoc(self) -> Y.YDoc:
-        doc = Y.YDoc()
-        user = self.scope.get("user", None)
-        room = self.room_name
-        if user is None or user.is_anonymous:
-            print("user was none")
-            return
-
-        files = user.file_store.get(room, None)
-        if files is None:
-            print("Files was none")
-            return
-
-        for file, value in files["files"].items():
-            text = doc.get_text(file)
-            if len(text.to_json()) <= 2:
-                with doc.begin_transaction() as txn:
-                    # Add text contents
-                    text.extend(txn, value)
-            pass
-        for file, value in files["files"].items():
-            text = doc.get_text(file)
-            print(text.to_json())
-
-        # fill doc with data from DB here
-        # doc.observe_after_transaction(self.on_update_event)
-        # doc.yText.getText("content")
-        return doc
-
     async def connect(self):
         user = self.scope.get("user", 0)
-        # print(dir(user))
         print("User connected", user)
         if user is None or user.is_anonymous:
             await self.close()
             return
         await super().connect()
 
-    # def on_update_event(self, event):
-    # process event here
-    # ...
-
+    # Uncomment and use if you need custom update handling,
+    # but the base YjsConsumer already applies updates to self.ydoc.
     # async def doc_update(self, update_wrapper):
     #     update = update_wrapper["update"]
     #     Y.apply_update(self.ydoc, update)

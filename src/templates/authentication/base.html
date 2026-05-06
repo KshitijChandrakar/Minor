@@ -14,7 +14,7 @@
 
             body {
                 font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background-color: var(--primary);
                 min-height: 100vh;
                 padding: 20px;
             }
@@ -120,9 +120,10 @@
                 margin-bottom: 20px;
             }
         </style>
+        <link rel="stylesheet" href="/static/css/global.css" />
         {% block extra_css %}{% endblock %}
     </head>
-    <body>
+    <body style="background-color: var(--primary)">
         <div class="container">
             {% if user.is_authenticated %}
             <div class="nav">

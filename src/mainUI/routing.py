@@ -1,7 +1,8 @@
 # mainUI/routing.py
 from django.urls import re_path
 
-from channels_yroom.consumer import YroomConsumer  # if using option A
+# from channels_yroom.consumer import YroomConsumer  # if using option A
+from .collab import CollaborationConsumer
 
 # OR
 # from pycrdt_websocket.django_channels import YpyConsumer  # if using option B
@@ -9,6 +10,6 @@ from channels_yroom.consumer import YroomConsumer  # if using option A
 websocket_urlpatterns = [
     # Matches ws://.../ws/collab/<room_name>/
     re_path(
-        r"ws/collab/(?P<room_name>[^/]+)/$", YroomConsumer.as_asgi()
+        r"ws/collab/(?P<room_name>[^/]+)/?$", CollaborationConsumer.as_asgi()
     ),  # or YpyConsumer
 ]

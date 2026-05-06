@@ -1,3 +1,4 @@
+import { convertorJSON } from "./PandocLoader.js";
 import {
     fileStore,
     activeFile,
@@ -119,18 +120,14 @@ function buildFilesPayload(entryName) {
 
 // ─── Unified debounced input handler ─────────────────────────────────────────
 const debouncedHandler = debounce(async (value) => {
-    fileStore[activeFile] = value;
-
     const currentFormat = window.currentState || "Typst";
 
-    if (currentFormat === "Typst") {
-        // Always preview the main file; if the user is editing a non-main file
-        // we still want to re-render since it may be imported by main.
-        const mainContent =
-            activeFile === mainFile ? value : fileStore[mainFile];
-        previewSvg(mainContent ?? "");
-        return;
-    }
+    // if (currentFormat === "Typst") {
+    //     // Always preview the main file; if the user is editing a non-main file
+    //     // we still want to re-render since it may be imported by main.
+    //     previewSvg(await convertorJSON(fileStore[mainFile]));
+    //     return;
+    // }
 
     // Pandoc path: convert mainFile content → typst for live preview
     const fromFormat = formatMap[currentFormat];
@@ -139,10 +136,16 @@ const debouncedHandler = debounce(async (value) => {
     const entryContent = fileStore[mainFile] ?? "";
     const filesPayload = buildFilesPayload(mainFile);
 
+    console.log(
+        "compiling other than typst",
+        fromFormat,
+        entryContent,
+        filesPayload,
+    );
     try {
         const compile_result = await window.pandocModule.convert(
             {
-                from: fromFormat,
+                from: "json",
                 to: "typst",
                 "output-file": "output.txt",
                 "resource-path": ["."],
@@ -152,6 +155,10 @@ const debouncedHandler = debounce(async (value) => {
         );
 
         if (compile_result.files?.["output.txt"]) {
+            console.log(
+                "After Converting other than typst, ie from json to typst",
+                await compile_result.files["output.txt"].text(),
+            );
             previewSvg(await compile_result.files["output.txt"].text());
         }
     } catch (error) {
@@ -160,6 +167,7 @@ const debouncedHandler = debounce(async (value) => {
 }, 1000);
 
 window.debouncedHandler = debouncedHandler;
+
 let LivePreview = document.getElementById("checkboxLivePreview");
 let compileButton = document.getElementById("compile");
 
@@ -174,9 +182,10 @@ compileButton.addEventListener("click", () => {
 
 // ─── File switching wiring ────────────────────────────────────────────────────
 // files.js calls these when the active or main file changes.
+import { convertorFromJSON } from "./PandocLoader.js";
 
 window.onActiveFileChange = (name) => {
-    window.editorAPI.loadValue(fileStore[name] ?? "");
+    window.editorAPI.loadValue(convertorFromJSON(fileStore[name] ?? ""));
     debouncedHandler(window.editorAPI.getValue());
 };
 

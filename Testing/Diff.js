@@ -1,10 +1,11 @@
 /**
- * Returns the single change between two strings.
+ * Returns the Yjs delta between two strings.
  * @param {string} a - Original string.
  * @param {string} b - Modified string.
- * @returns {Object|null} - Change descriptor or null if strings are equal.
+ * @returns {Array|null} - Delta array (e.g., [{ retain: 3 }, { delete: 1 }, { insert: "lo" }])
+ *                         or null if strings are equal.
  */
-function getStringChanges(a, b) {
+function getStringDelta(a, b) {
     const lenA = a.length;
     const lenB = b.length;
 
@@ -14,9 +15,9 @@ function getStringChanges(a, b) {
         i++;
     }
 
-    // If both strings are identical up to the end
+    // If both strings are identical
     if (i === lenA && i === lenB) {
-        return null; // no change
+        return null;
     }
 
     // Find last differing index from the end
@@ -27,20 +28,41 @@ function getStringChanges(a, b) {
         endB--;
     }
 
-    // Extract the differing substrings
-    const removed = a.slice(i, endA + 1);
+    const removedLength = endA - i + 1; // length of removed substring
     const added = b.slice(i, endB + 1);
 
-    // Determine the type of change
-    let type;
-    if (removed === "" && added !== "") type = "insert";
-    else if (removed !== "" && added === "") type = "delete";
-    else type = "replace";
+    const delta = [];
 
-    return {
-        type,
-        index: i,
-        removed,
-        added,
-    };
+    // Retain the common prefix (if any)
+    if (i > 0) {
+        delta.push({ retain: i });
+    }
+
+    // Delete the removed characters (if any)
+    if (removedLength > 0) {
+        delta.push({ delete: removedLength });
+    }
+
+    // Insert the new characters (if any)
+    if (added.length > 0) {
+        delta.push({ insert: added });
+    }
+
+    return delta;
 }
+
+// Examples:
+console.log(getStringDelta("hello", "hella"));
+// [{ retain: 4 }, { delete: 1 }, { insert: "a" }]
+
+console.log(getStringDelta("hello", "hell"));
+// [{ retain: 4 }, { delete: 1 }]
+
+console.log(getStringDelta("hel", "hello"));
+// [{ retain: 3 }, { insert: "lo" }]
+
+console.log(getStringDelta("abc", "abc"));
+// null
+
+console.log(getStringDelta("hello world", "hello"));
+// [{ retain: 5 }, { delete: 6 }]  (deletes " world")

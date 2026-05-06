@@ -20,6 +20,7 @@ urlpatterns = [
     path("api/filesFetch/<str:projectID>", api.filesFetch),
     path("api/filesChange", api.filesChange),
     path("api/filesList", api.filesList),
+    path("api/getMainFile/<str:projectID>", api.getMainFile),
     # path("", views.homepage),
     path("api/createProject/<str:project_name>", api.createProject),
     # path("ws/<str:room>", YjsConsumer.as_asgi()),
